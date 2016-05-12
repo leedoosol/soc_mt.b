@@ -17,10 +17,10 @@ class CDaejeonTicketDlg : public CDialogEx
 	void OnDestroy();
 // 생성입니다.
 public:
-	afx_msg void OnBnClickedOk();
+//	afx_msg void OnBnClickedOk();
 
 	HWND m_Cap;
-	CStatic m_stDisplay;
+//	CStatic m_stDisplay;
 	CDaejeonTicketDlg(CWnd* pParent = NULL);	// 표준 생성자입니다.
 
 // 대화 상자 데이터입니다.

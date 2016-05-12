@@ -6,16 +6,24 @@
 #include "DaejeonTicket.h"
 #include "DaejeonTicketDlg.h"
 #include "afxdialogex.h"
+#include <iostream>
+using namespace std;
+
+#define COL 640
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
+// 카메라 영상 및 정보를 저장하기 위한 전역 변수
 BITMAPINFO BmInfo;
 LPBYTE pImgBuffer;
 
-
+// win32 program에서 console창을 띄우기 위한 방법
+// printf를 사용하기 위해 stdio.h를 include
+#pragma comment(linker, "/entry:WinMainCRTStartup /subsystem:console")
 // 응용 프로그램 정보에 사용되는 CAboutDlg 대화 상자입니다.
+
 
 class CAboutDlg : public CDialogEx
 {
@@ -206,8 +214,141 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 	영상 데이터는
 	lpVHdr->lpData 에 1차원 배열로 저장되어 있다.
 	여기에 영상처리 코드를 넣으면 된다.
-
 	*/
+	BYTE pixel;
+	int  i, j, index, counter = 0;
+
+	if (pImgBuffer == NULL)
+		pImgBuffer = (LPBYTE)new BYTE[BmInfo.bmiHeader.biHeight*BmInfo.bmiHeader.biWidth];
+
+	for (i = 0; i <BmInfo.bmiHeader.biWidth*BmInfo.bmiHeader.biHeight; i++)
+	{
+		pixel = (*(lpVHdr->lpData + (i * 3)) +
+			*(lpVHdr->lpData + (i * 3) + 1) +
+			*(lpVHdr->lpData + (i * 3) + 2)) / 3;
+
+		if (pixel > 200) *(pImgBuffer + i) = 255;
+		else *(pImgBuffer + i) = 0;
+	}
+
+	int xCenter = 0, yCenter = 0;
+	for (i = 0; i<BmInfo.bmiHeader.biHeight; i++)
+	{
+		index = i*BmInfo.bmiHeader.biWidth;
+		for (j = 0; j<BmInfo.bmiHeader.biWidth; j++)
+		{
+			if (*(pImgBuffer + index + j) == 255)
+			{
+				xCenter += i;
+				yCenter += j;
+				counter++;
+			}
+		}
+	}
+	xCenter = (int)((float)xCenter / (float)counter);
+	yCenter = (int)((float)yCenter / (float)counter);
+	int kasd = 0;
+	kasd = (float)xCenter + (int)30;
+	int kase = 0;
+	kase = (float)xCenter - (int)30;
+	for (i = xCenter - 15; i <= xCenter + 15; i++)
+	{
+		if (i<0 || i >= BmInfo.bmiHeader.biHeight) continue;
+		index = i*BmInfo.bmiHeader.biWidth;
+		*(lpVHdr->lpData + 3 * (index + yCenter)) = 0;
+		*(lpVHdr->lpData + 3 * (index + yCenter) + 1) = 0;
+		*(lpVHdr->lpData + 3 * (index + yCenter) + 2) = 255;
+	}
+
+	index = xCenter*BmInfo.bmiHeader.biWidth;
+	for (j = yCenter - 15; j <= yCenter + 15; j++)
+	{
+		if (j<0 || j >= BmInfo.bmiHeader.biWidth) continue;
+		*(lpVHdr->lpData + 3 * (index + j)) = 0;
+		*(lpVHdr->lpData + 3 * (index + j) + 1) = 0;
+		*(lpVHdr->lpData + 3 * (index + j) + 2) = 255;
+	}
+
+	
+	for (j = yCenter - 30; j <= yCenter + 30; j++)
+	{
+		int kase = 0;
+		kase = xCenter + 30;
+		index = kase*BmInfo.bmiHeader.biWidth;
+		if ((j + index)  < 0 && (j + index) >= 640 * 480) {
+			continue;
+		}
+		else {
+			*(lpVHdr->lpData + 3 * (index + j)) = 0;
+			*(lpVHdr->lpData + 3 * (index + j) + 1) = 255;
+			*(lpVHdr->lpData + 3 * (index + j) + 2) = 0;
+		}
+		//if (j<0 || j >= BmInfo.bmiHeader.biWidth) continue;
+
+	}
+
+	
+	for (j = yCenter - 30; j <= yCenter + 30; j++)
+	{
+		int kase = 0;
+		kase = xCenter - 30;
+		index = kase*BmInfo.bmiHeader.biWidth;
+		//if (j<0 || j >= BmInfo.bmiHeader.biWidth) continue;
+		if ( (j+index)  < 0 &&  (j+index) >= 640 * 480) {
+			continue;
+		}
+		else {
+			*(lpVHdr->lpData + 3 * (index + j)) = 0;
+			*(lpVHdr->lpData + 3 * (index + j) + 1) = 255;
+			*(lpVHdr->lpData + 3 * (index + j) + 2) = 0;
+		}
+	}
+	
+	for (j = xCenter - 30; j <= xCenter + 30; j++)
+	{
+		int kase = 0;
+		kase = yCenter - 30;
+
+		index = j*BmInfo.bmiHeader.biWidth;
+		//if (j<0 || j >= BmInfo.bmiHeader.biWidth) continue;
+		if ((kase + index)  < 0 && (kase + index) >= 640 * 480) {
+			continue;
+		}
+		else {
+			*(lpVHdr->lpData + 3 * (index + kase)) = 0;
+			*(lpVHdr->lpData + 3 * (index + kase) + 1) = 255;
+			*(lpVHdr->lpData + 3 * (index + kase) + 2) = 0;
+		}
+	}
+
+
+	for (j = xCenter - 30; j <= xCenter + 30; j++)
+	{
+		int kase = 0;
+		kase = yCenter + 30;
+
+		index = j*BmInfo.bmiHeader.biWidth;
+		//if (j<0 || j >= BmInfo.bmiHeader.biWidth) continue;
+		if ((kase + index)  < 0 && (kase + index) >= 640 * 480) {
+			continue;
+		}
+		else {
+			*(lpVHdr->lpData + 3 * (index + kase)) = 0;
+			*(lpVHdr->lpData + 3 * (index + kase) + 1) = 255;
+			*(lpVHdr->lpData + 3 * (index + kase) + 2) = 0;
+		}
+	}
+
+
+
+
+
+	// 차이가 나는 화소의 수를 caption bar에 표시
+	CString  strTitle;
+	strTitle.Format(_T("Binary Tracker (%d,%d)"), xCenter, yCenter);
+	AfxGetMainWnd()->SetWindowText(strTitle);
+
 
 	return (LRESULT)true;
+
 }
