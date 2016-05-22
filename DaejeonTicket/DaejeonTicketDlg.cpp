@@ -14,7 +14,6 @@ using namespace std;
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -266,7 +265,16 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 
 		//printf("H:%.2lf | S:%.2lf | V:%.2lf\n", fH, fS, fV);
 		//Sleep(1500);
-		if ((fH >= 210 && fH <= 270) && (fS >= 0.2 && fS <= 1) && (fV >= 0 && fV <= 1)) {
+
+		char option;
+		//detect blue
+		if ((fH >= 210 && fH <= 270) && (fS >= 0.2 && fS <= 1) && (fV >= 0.5 && fV <= 1)) {
+			*(pImgBuffer + i) = 255;
+		}
+		else if ((fH >= 30 && fH <= 90) && (fS >= 0.2 && fS <= 1) && (fV >= 0.5 && fV <= 1)) {
+			*(pImgBuffer + i) = 255;
+		}
+		else if ((fH >= 210 && fH <= 270) && (fS >= 0.2 && fS <= 1) && (fV >= 0.5 && fV <= 1)) {
 			*(pImgBuffer + i) = 255;
 		}
 		else *(pImgBuffer + i) = 0;
@@ -500,7 +508,6 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 	CString  strTitle;
 	strTitle.Format(_T("Binary Tracker (%d,%d)"), xCenter, yCenter);
 	AfxGetMainWnd()->SetWindowText(strTitle);
-
 
 	return (LRESULT)true;
 
