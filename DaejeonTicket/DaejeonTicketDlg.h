@@ -10,6 +10,7 @@
 #define    _DEF_WEBCAM        1000
 
 LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr);
+LRESULT CALLBACK CallbackOnFrame2(HWND hWnd, LPVIDEOHDR lpVHdr);
 
 // CDaejeonTicketDlg 대화 상자
 class CDaejeonTicketDlg : public CDialogEx
@@ -42,4 +43,7 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
+public:
+	HWND m_Cap2;
+	HWND m_Cap3;
 };

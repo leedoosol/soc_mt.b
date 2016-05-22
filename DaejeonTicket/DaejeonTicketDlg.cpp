@@ -121,22 +121,28 @@ BOOL CDaejeonTicketDlg::OnInitDialog()
 	this->SetWindowPos(NULL, 0, 0, width, height, SWP_NOSIZE);
 
 	// 윈도우 생성
-	m_Cap = capCreateCaptureWindow(TEXT("Image Test"), WS_CHILD
+	m_Cap = capCreateCaptureWindow(TEXT("original_image"), WS_CHILD
 		| WS_VISIBLE, 0, 0, 640, 480, this->m_hWnd, NULL);
+
 
 	// 콜백함수 지정
 	if (capSetCallbackOnFrame(m_Cap, CallbackOnFrame) == FALSE) {
 		return FALSE;
 	}
 
+
 	// 카메라 드라이버와 연결
 	if (capDriverConnect(m_Cap, 0) == FALSE) {
 		return FALSE;
 	}
+	
 
+	// 카메라 설정
 	capPreviewRate(m_Cap, 33);    // 초당 프레임 지정
 	capOverlay(m_Cap, false);
 	capPreview(m_Cap, true);        // 미리보기 기능 설정
+
+	
 
 	if (BmInfo.bmiHeader.biBitCount != 24) {
 
@@ -146,6 +152,7 @@ BOOL CDaejeonTicketDlg::OnInitDialog()
 			BmInfo.bmiHeader.biHeight * 3;
 
 		capGetVideoFormat(m_Cap, &BmInfo, sizeof(BITMAPINFO));
+
 	}
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -213,16 +220,14 @@ void CDaejeonTicketDlg::OnDestroy()
 
 LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 {
+
 	/*
 	영상 데이터는
 	lpVHdr->lpData 에 1차원 배열로 저장되어 있다.
-	여기에 영상처리 코드를 넣으면 된다.
 	*/
 	double fB, fG, fR, fH, fS, fV;
-	//double del_R, del_G, del_B;
 	int  i, j, index, counter = 0;
 	pImgBuffer = (LPBYTE)new BYTE[BmInfo.bmiHeader.biHeight*BmInfo.bmiHeader.biWidth];
-
 
 	for (i = 0; i < BmInfo.bmiHeader.biWidth*BmInfo.bmiHeader.biHeight; i++) {
 		fB = *(lpVHdr->lpData + (i * 3)) / 255.0;
@@ -271,12 +276,12 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 		if ((fH >= 210 && fH <= 270) && (fS >= 0.2 && fS <= 1) && (fV >= 0.5 && fV <= 1)) {
 			*(pImgBuffer + i) = 255;
 		}
-		else if ((fH >= 30 && fH <= 90) && (fS >= 0.2 && fS <= 1) && (fV >= 0.5 && fV <= 1)) {
-			*(pImgBuffer + i) = 255;
-		}
-		else if ((fH >= 210 && fH <= 270) && (fS >= 0.2 && fS <= 1) && (fV >= 0.5 && fV <= 1)) {
-			*(pImgBuffer + i) = 255;
-		}
+		//else if ((fH >= 30 && fH <= 90) && (fS >= 0.2 && fS <= 1) && (fV >= 0.5 && fV <= 1)) {
+		//	*(pImgBuffer + i) = 255;
+		//}
+		//else if ((fH >= 210 && fH <= 270) && (fS >= 0.2 && fS <= 1) && (fV >= 0.5 && fV <= 1)) {
+		//	*(pImgBuffer + i) = 255;
+		//}
 		else *(pImgBuffer + i) = 0;
 	}
 
@@ -503,10 +508,55 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 	//	}
 	//}
 
+	
+
+
+	//int xCenter = 0, yCenter = 0;
+	//for (i = 0; i<BmInfo.bmiHeader.biHeight; i++)
+	//{
+	//	index = i*BmInfo.bmiHeader.biWidth;
+	//	for (j = 0; j<BmInfo.bmiHeader.biWidth; j++)
+	//	{
+	//		if (*(pImgBuffer + index + j) == 255)
+	//		{
+	//			xCenter += i;
+	//			yCenter += j;
+	//			counter++;
+	//		}
+	//	}
+	//}
+
+
+
+	//// to make cross point
+	//xCenter = (int)((float)xCenter / (float)counter);
+	//yCenter = (int)((float)yCenter / (float)counter);
+	///*int kasd = 0;
+	//kasd = (float)xCenter + (int)30;
+	//int kase = 0;
+	//kase = (float)xCenter - (int)30;
+	//*/
+	//for (i = xCenter - 15; i <= xCenter + 15; i++)
+	//{
+	//	if (i<0 || i >= BmInfo.bmiHeader.biHeight) continue;
+	//	index = i*BmInfo.bmiHeader.biWidth;
+	//	*(lpVHdr->lpData + 3 * (index + yCenter)) = 0;
+	//	*(lpVHdr->lpData + 3 * (index + yCenter) + 1) = 0;
+	//	*(lpVHdr->lpData + 3 * (index + yCenter) + 2) = 255;
+	//}
+
+	//index = xCenter*BmInfo.bmiHeader.biWidth;
+	//for (j = yCenter - 15; j <= yCenter + 15; j++)
+	//{
+	//	if (j<0 || j >= BmInfo.bmiHeader.biWidth) continue;
+	//	*(lpVHdr->lpData + 3 * (index + j)) = 0;
+	//	*(lpVHdr->lpData + 3 * (index + j) + 1) = 0;
+	//	*(lpVHdr->lpData + 3 * (index + j) + 2) = 255;
+	//}
 
 	// 차이가 나는 화소의 수를 caption bar에 표시
 	CString  strTitle;
-	strTitle.Format(_T("Binary Tracker (%d,%d)"), xCenter, yCenter);
+	//strTitle.Format(_T("Binary Tracker (%d,%d)"), xCenter, yCenter);
 	AfxGetMainWnd()->SetWindowText(strTitle);
 
 	return (LRESULT)true;
