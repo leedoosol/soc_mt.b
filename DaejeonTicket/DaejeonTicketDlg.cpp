@@ -21,6 +21,7 @@ using namespace std;
 // 카메라 영상 및 정보를 저장하기 위한 전역 변수
 BITMAPINFO BmInfo;
 LPBYTE pImgBuffer;
+char state;
 
 // win32 program에서 console창을 띄우기 위한 방법
 // printf를 사용하기 위해 stdio.h를 include
@@ -78,6 +79,10 @@ BEGIN_MESSAGE_MAP(CDaejeonTicketDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_BN_CLICKED(IDOK3, &CDaejeonTicketDlg::OnBnClickedOk3)
+	ON_BN_CLICKED(IDOK4, &CDaejeonTicketDlg::OnBnClickedOk4)
+	ON_BN_CLICKED(IDOK5, &CDaejeonTicketDlg::OnBnClickedOk5)
+	ON_BN_CLICKED(IDOK5, &CDaejeonTicketDlg::OnBnClickedOk6)
 END_MESSAGE_MAP()
 
 
@@ -206,7 +211,6 @@ HCURSOR CDaejeonTicketDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-
 void CDaejeonTicketDlg::OnDestroy()
 {
 	CDialog::OnDestroy();
@@ -270,129 +274,30 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 
 		//printf("H:%.2lf | S:%.2lf | V:%.2lf\n", fH, fS, fV);
 		//Sleep(1500);
-
-		char option;
-		//detect blue
-		if ((fH >= 210 && fH <= 270) && (fS >= 0.2 && fS <= 1) && (fV >= 0.5 && fV <= 1)) {
-			*(pImgBuffer + i) = 255;
+		switch (state) {
+		case 'b':
+			if ((fH >= 210 && fH <= 270) && (fS >= 0.2 && fS <= 1) && (fV >= 0.5 && fV <= 1))
+				*(pImgBuffer + i) = 255;
+			break;
+		case 'g':
+			if ((fH >= 90 && fH <= 150) && (fS >= 0.2 && fS <= 1) && (fV >= 0.5 && fV <= 1))
+				*(pImgBuffer + i) = 255;
+			break;
+		case 'r':
+			if ((fH >= 330 && fH <= 30) && (fS >= 0.2 && fS <= 1) && (fV >= 0.5 && fV <= 1))
+				*(pImgBuffer + i) = 255;
+			break;
+		case 'y':
+			if ((fH >= 30 && fH <= 90) && (fS >= 0.2 && fS <= 1) && (fV >= 0.5 && fV <= 1))
+					*(pImgBuffer + i) = 255;
+			break;
+		default:
+			*(pImgBuffer + i) = 0;
+			break;
 		}
-		//else if ((fH >= 30 && fH <= 90) && (fS >= 0.2 && fS <= 1) && (fV >= 0.5 && fV <= 1)) {
-		//	*(pImgBuffer + i) = 255;
-		//}
-		//else if ((fH >= 210 && fH <= 270) && (fS >= 0.2 && fS <= 1) && (fV >= 0.5 && fV <= 1)) {
-		//	*(pImgBuffer + i) = 255;
-		//}
-		else *(pImgBuffer + i) = 0;
 	}
 
-	//double pixel_b, pixel_g, pixel_r, var_Min, var_Max, del_Max;
-	//double del_R, del_G, del_B;
-	//int  i, j, index, counter = 0;
 
-	//double H, S, V;
-
-	//if (pImgBuffer == NULL)
-	//	pImgBuffer = (LPBYTE)new BYTE[BmInfo.bmiHeader.biHeight*BmInfo.bmiHeader.biWidth];
-
-	//for (i = 0; i < BmInfo.bmiHeader.biWidth*BmInfo.bmiHeader.biHeight; i++)
-	//{
-	//	pixel_b = *(lpVHdr->lpData + (i * 3)) / 255.0;
-	//	pixel_g = *(lpVHdr->lpData + (i * 3) + 1) / 255.0;
-	//	pixel_r = *(lpVHdr->lpData + (i * 3) + 2) / 255.0;
-
-	//	printf("%lf | %lf | %lf \n", pixel_b, pixel_g, pixel_r);
-
-	//	var_Min = MIN(MIN(pixel_b, pixel_g), pixel_r);
-	//	var_Max = MAX(MAX(pixel_b, pixel_g), pixel_r);
-	//	del_Max = var_Max - var_Min;
-	//	printf("var_Min : %lf\n", var_Min);
-	//	printf("var_Max : %lf\n", var_Max);
-	//	printf("delmax : %lf\n", del_Max);
-
-
-
-	//	V = var_Max;
-	//	printf("V : %lf\n", V);
-
-	//	if (del_Max == 0)
-	//	{
-	//		H = S = 0;
-	//	}
-	//	else
-	//	{
-	//		S = del_Max / var_Max;
-	//		printf("S : %lf\n", S);
-
-	//		del_R = (((var_Max - pixel_r) / 6) + (del_Max / 2)) / del_Max;
-	//		del_G = (((var_Max - pixel_g) / 6) + (del_Max / 2)) / del_Max;
-	//		del_B = (((var_Max - pixel_b) / 6) + (del_Max / 2)) / del_Max;
-
-	//		if (pixel_r == var_Max) H = del_B - del_G;
-	//		else if (pixel_g == var_Max) H = (1 / 3) + del_R - del_B;
-	//		else if (pixel_b == var_Max) H = (2 / 3) + del_G - del_R;
-
-	//		if (H < 0) H += 1;
-	//		if (H > 1) H -= 1;
-	//	}
-	//	printf("H : %lf\n", H);
-
-	//	Sleep(1500);
-	//	if ((H >= 210 && H <= 270) && (S >= 0.2 && S <= 1) && (V >= 0 && V <= 1)) {
-	//		*(pImgBuffer + i) = 255;
-	//	}
-	//	cout << endl;
-
-	//}
-
-
-	/*for (i = 0; i <BmInfo.bmiHeader.biWidth*BmInfo.bmiHeader.biHeight; i++)
-	{
-		pixel_b = *(lpVHdr->lpData + (i * 3));
-		pixel_g = *(lpVHdr->lpData + (i * 3) + 1);
-		pixel_r = *(lpVHdr->lpData + (i * 3) + 2);
-
-
-		if (pixel_b > 70&& pixel_g + pixel_r < 10) {
-			*(pImgBuffer + i) = 255;
-			printf("%d || %d || %d\n", pixel_b, pixel_g, pixel_r);
-		}
-		else if (pixel_b > 100 && pixel_g + pixel_r < 150 && pixel_r-pixel_g > 20) {
-			*(pImgBuffer + i) = 255;
-				printf("%d || %d || %d\n", pixel_b, pixel_g, pixel_r);
-		}
-		else if (pixel_b > 50 && pixel_g + pixel_r < 10) {
-			*(pImgBuffer + i) = 255;
-				printf("%d || %d || %d\n", pixel_b, pixel_g, pixel_r);
-		}
-		else  if (pixel_b > 200 && pixel_g + pixel_r < 200) {
-			*(pImgBuffer + i) = 255;
-			printf("%d || %d || %d\n", pixel_b, pixel_g, pixel_r);
-		}
-		else  if (pixel_b > 150 && pixel_g + pixel_r < 100) {
-			*(pImgBuffer + i) = 255;
-			printf("%d || %d || %d\n", pixel_b, pixel_g, pixel_r);
-		}
-		else  if (pixel_b > 100 && pixel_g + pixel_r < 50) {
-			*(pImgBuffer + i) = 255;
-			printf("%d || %d || %d\n", pixel_b, pixel_g, pixel_r);
-		}
-		else  if (pixel_b > 50 && pixel_g + pixel_r < 10) {
-			*(pImgBuffer + i) = 255;
-			printf("%d || %d || %d\n", pixel_b, pixel_g, pixel_r);
-		}
-		else *(pImgBuffer + i) = 0;
-	}*/
-
-	//Sleep(1500);
-	//for (i = 0; i <BmInfo.bmiHeader.biWidth*BmInfo.bmiHeader.biHeight; i++)
-	//{
-	//	pixel =
-	//		(*(lpVHdr->lpData + (i * 3)) +
-	//			*(lpVHdr->lpData + (i * 3) + 1) +
-	//			*(lpVHdr->lpData + (i * 3) + 2)) / 3;
-	//	if (pixel > 200) *(pImgBuffer + i) = 255;
-	//	else *(pImgBuffer + i) = 0;
-	//}
 
 	int xCenter = 0, yCenter = 0;
 	for (i = 0; i<BmInfo.bmiHeader.biHeight; i++)
@@ -563,3 +468,26 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 
 }
 
+
+
+void CDaejeonTicketDlg::OnBnClickedOk6()
+{
+	state = 'y';
+}
+
+void CDaejeonTicketDlg::OnBnClickedOk3()
+{
+	state = 'b';
+}
+
+
+void CDaejeonTicketDlg::OnBnClickedOk4()
+{
+	state = 'g';
+}
+
+
+void CDaejeonTicketDlg::OnBnClickedOk5()
+{
+	state = 'r';
+}

@@ -46,4 +46,8 @@ protected:
 public:
 	HWND m_Cap2;
 	HWND m_Cap3;
+	afx_msg void OnBnClickedOk6();
+	afx_msg void OnBnClickedOk3();
+	afx_msg void OnBnClickedOk4();
+	afx_msg void OnBnClickedOk5();
 };
