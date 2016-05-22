@@ -7,9 +7,13 @@
 #include "DaejeonTicketDlg.h"
 #include "afxdialogex.h"
 #include <iostream>
+#include <Windows.h>
 using namespace std;
 
 #define COL 640
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -215,21 +219,167 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 	lpVHdr->lpData 에 1차원 배열로 저장되어 있다.
 	여기에 영상처리 코드를 넣으면 된다.
 	*/
-	BYTE pixel;
+	double fB, fG, fR, fH, fS, fV;
+	//double del_R, del_G, del_B;
 	int  i, j, index, counter = 0;
+	pImgBuffer = (LPBYTE)new BYTE[BmInfo.bmiHeader.biHeight*BmInfo.bmiHeader.biWidth];
 
-	if (pImgBuffer == NULL)
-		pImgBuffer = (LPBYTE)new BYTE[BmInfo.bmiHeader.biHeight*BmInfo.bmiHeader.biWidth];
 
-	for (i = 0; i <BmInfo.bmiHeader.biWidth*BmInfo.bmiHeader.biHeight; i++)
-	{
-		pixel = (*(lpVHdr->lpData + (i * 3)) +
-			*(lpVHdr->lpData + (i * 3) + 1) +
-			*(lpVHdr->lpData + (i * 3) + 2)) / 3;
+	for (i = 0; i < BmInfo.bmiHeader.biWidth*BmInfo.bmiHeader.biHeight; i++) {
+		fB = *(lpVHdr->lpData + (i * 3)) / 255.0;
+		fG = *(lpVHdr->lpData + (i * 3) + 1) / 255.0;
+		fR = *(lpVHdr->lpData + (i * 3) + 2) / 255.0;
 
-		if (pixel > 200) *(pImgBuffer + i) = 255;
+		double fCMax = MAX(MAX(fR, fG), fB);
+		double fCMin = MIN(MIN(fR, fG), fB);
+		double fDelta = fCMax - fCMin;
+
+		if (fDelta > 0) {
+			if (fCMax == fR) {
+				fH = 60 * (fmod(((fG - fB) / fDelta), 6));
+			}
+			else if (fCMax == fG) {
+				fH = 60 * (((fB - fR) / fDelta) + 2);
+			}
+			else if (fCMax == fB) {
+				fH = 60 * (((fR - fG) / fDelta) + 4);
+			}
+
+			if (fCMax > 0) {
+				fS = fDelta / fCMax;
+			}
+			else {
+				fS = 0;
+			}
+
+			fV = fCMax;
+		}
+		else {
+			fH = 0;
+			fS = 0;
+			fV = fCMax;
+		}
+
+		if (fH < 0) {
+			fH = 360 + fH;
+		}
+
+		//printf("H:%.2lf | S:%.2lf | V:%.2lf\n", fH, fS, fV);
+		//Sleep(1500);
+		if ((fH >= 210 && fH <= 270) && (fS >= 0.2 && fS <= 1) && (fV >= 0 && fV <= 1)) {
+			*(pImgBuffer + i) = 255;
+		}
 		else *(pImgBuffer + i) = 0;
 	}
+
+	//double pixel_b, pixel_g, pixel_r, var_Min, var_Max, del_Max;
+	//double del_R, del_G, del_B;
+	//int  i, j, index, counter = 0;
+
+	//double H, S, V;
+
+	//if (pImgBuffer == NULL)
+	//	pImgBuffer = (LPBYTE)new BYTE[BmInfo.bmiHeader.biHeight*BmInfo.bmiHeader.biWidth];
+
+	//for (i = 0; i < BmInfo.bmiHeader.biWidth*BmInfo.bmiHeader.biHeight; i++)
+	//{
+	//	pixel_b = *(lpVHdr->lpData + (i * 3)) / 255.0;
+	//	pixel_g = *(lpVHdr->lpData + (i * 3) + 1) / 255.0;
+	//	pixel_r = *(lpVHdr->lpData + (i * 3) + 2) / 255.0;
+
+	//	printf("%lf | %lf | %lf \n", pixel_b, pixel_g, pixel_r);
+
+	//	var_Min = MIN(MIN(pixel_b, pixel_g), pixel_r);
+	//	var_Max = MAX(MAX(pixel_b, pixel_g), pixel_r);
+	//	del_Max = var_Max - var_Min;
+	//	printf("var_Min : %lf\n", var_Min);
+	//	printf("var_Max : %lf\n", var_Max);
+	//	printf("delmax : %lf\n", del_Max);
+
+
+
+	//	V = var_Max;
+	//	printf("V : %lf\n", V);
+
+	//	if (del_Max == 0)
+	//	{
+	//		H = S = 0;
+	//	}
+	//	else
+	//	{
+	//		S = del_Max / var_Max;
+	//		printf("S : %lf\n", S);
+
+	//		del_R = (((var_Max - pixel_r) / 6) + (del_Max / 2)) / del_Max;
+	//		del_G = (((var_Max - pixel_g) / 6) + (del_Max / 2)) / del_Max;
+	//		del_B = (((var_Max - pixel_b) / 6) + (del_Max / 2)) / del_Max;
+
+	//		if (pixel_r == var_Max) H = del_B - del_G;
+	//		else if (pixel_g == var_Max) H = (1 / 3) + del_R - del_B;
+	//		else if (pixel_b == var_Max) H = (2 / 3) + del_G - del_R;
+
+	//		if (H < 0) H += 1;
+	//		if (H > 1) H -= 1;
+	//	}
+	//	printf("H : %lf\n", H);
+
+	//	Sleep(1500);
+	//	if ((H >= 210 && H <= 270) && (S >= 0.2 && S <= 1) && (V >= 0 && V <= 1)) {
+	//		*(pImgBuffer + i) = 255;
+	//	}
+	//	cout << endl;
+
+	//}
+
+
+	/*for (i = 0; i <BmInfo.bmiHeader.biWidth*BmInfo.bmiHeader.biHeight; i++)
+	{
+		pixel_b = *(lpVHdr->lpData + (i * 3));
+		pixel_g = *(lpVHdr->lpData + (i * 3) + 1);
+		pixel_r = *(lpVHdr->lpData + (i * 3) + 2);
+
+
+		if (pixel_b > 70&& pixel_g + pixel_r < 10) {
+			*(pImgBuffer + i) = 255;
+			printf("%d || %d || %d\n", pixel_b, pixel_g, pixel_r);
+		}
+		else if (pixel_b > 100 && pixel_g + pixel_r < 150 && pixel_r-pixel_g > 20) {
+			*(pImgBuffer + i) = 255;
+				printf("%d || %d || %d\n", pixel_b, pixel_g, pixel_r);
+		}
+		else if (pixel_b > 50 && pixel_g + pixel_r < 10) {
+			*(pImgBuffer + i) = 255;
+				printf("%d || %d || %d\n", pixel_b, pixel_g, pixel_r);
+		}
+		else  if (pixel_b > 200 && pixel_g + pixel_r < 200) {
+			*(pImgBuffer + i) = 255;
+			printf("%d || %d || %d\n", pixel_b, pixel_g, pixel_r);
+		}
+		else  if (pixel_b > 150 && pixel_g + pixel_r < 100) {
+			*(pImgBuffer + i) = 255;
+			printf("%d || %d || %d\n", pixel_b, pixel_g, pixel_r);
+		}
+		else  if (pixel_b > 100 && pixel_g + pixel_r < 50) {
+			*(pImgBuffer + i) = 255;
+			printf("%d || %d || %d\n", pixel_b, pixel_g, pixel_r);
+		}
+		else  if (pixel_b > 50 && pixel_g + pixel_r < 10) {
+			*(pImgBuffer + i) = 255;
+			printf("%d || %d || %d\n", pixel_b, pixel_g, pixel_r);
+		}
+		else *(pImgBuffer + i) = 0;
+	}*/
+
+	//Sleep(1500);
+	//for (i = 0; i <BmInfo.bmiHeader.biWidth*BmInfo.bmiHeader.biHeight; i++)
+	//{
+	//	pixel =
+	//		(*(lpVHdr->lpData + (i * 3)) +
+	//			*(lpVHdr->lpData + (i * 3) + 1) +
+	//			*(lpVHdr->lpData + (i * 3) + 2)) / 3;
+	//	if (pixel > 200) *(pImgBuffer + i) = 255;
+	//	else *(pImgBuffer + i) = 0;
+	//}
 
 	int xCenter = 0, yCenter = 0;
 	for (i = 0; i<BmInfo.bmiHeader.biHeight; i++)
@@ -245,12 +395,18 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 			}
 		}
 	}
+
+
 	xCenter = (int)((float)xCenter / (float)counter);
 	yCenter = (int)((float)yCenter / (float)counter);
-	int kasd = 0;
-	kasd = (float)xCenter + (int)30;
-	int kase = 0;
-	kase = (float)xCenter - (int)30;
+	
+	//??
+	//int kasd = 0;
+	//kasd = (float)xCenter + (int)30;
+	//int kase = 0;
+	//kase = (float)xCenter - (int)30;
+
+
 	for (i = xCenter - 15; i <= xCenter + 15; i++)
 	{
 		if (i<0 || i >= BmInfo.bmiHeader.biHeight) continue;
@@ -269,78 +425,75 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 		*(lpVHdr->lpData + 3 * (index + j) + 2) = 255;
 	}
 
-	
-	for (j = yCenter - 30; j <= yCenter + 30; j++)
-	{
-		int kase = 0;
-		kase = xCenter + 30;
-		index = kase*BmInfo.bmiHeader.biWidth;
-		if ((j + index)  < 0 && (j + index) >= 640 * 480) {
-			continue;
-		}
-		else {
-			*(lpVHdr->lpData + 3 * (index + j)) = 0;
-			*(lpVHdr->lpData + 3 * (index + j) + 1) = 255;
-			*(lpVHdr->lpData + 3 * (index + j) + 2) = 0;
-		}
-		//if (j<0 || j >= BmInfo.bmiHeader.biWidth) continue;
+	//
+	//for (j = yCenter - 30; j <= yCenter + 30; j++)
+	//{
+	//	int kase = 0;
+	//	kase = xCenter + 30;
+	//	index = kase*BmInfo.bmiHeader.biWidth;
+	//	if ((j + index)  < 0 && (j + index) >= 640 * 480) {
+	//		continue;
+	//	}
+	//	else {
+	//		*(lpVHdr->lpData + 3 * (index + j)) = 0;
+	//		*(lpVHdr->lpData + 3 * (index + j) + 1) = 255;
+	//		*(lpVHdr->lpData + 3 * (index + j) + 2) = 0;
+	//	}
+	//	//if (j<0 || j >= BmInfo.bmiHeader.biWidth) continue;
 
-	}
+	//}
 
-	
-	for (j = yCenter - 30; j <= yCenter + 30; j++)
-	{
-		int kase = 0;
-		kase = xCenter - 30;
-		index = kase*BmInfo.bmiHeader.biWidth;
-		//if (j<0 || j >= BmInfo.bmiHeader.biWidth) continue;
-		if ( (j+index)  < 0 &&  (j+index) >= 640 * 480) {
-			continue;
-		}
-		else {
-			*(lpVHdr->lpData + 3 * (index + j)) = 0;
-			*(lpVHdr->lpData + 3 * (index + j) + 1) = 255;
-			*(lpVHdr->lpData + 3 * (index + j) + 2) = 0;
-		}
-	}
-	
-	for (j = xCenter - 30; j <= xCenter + 30; j++)
-	{
-		int kase = 0;
-		kase = yCenter - 30;
+	//
+	//for (j = yCenter - 30; j <= yCenter + 30; j++)
+	//{
+	//	int kase = 0;
+	//	kase = xCenter - 30;
+	//	index = kase*BmInfo.bmiHeader.biWidth;
+	//	//if (j<0 || j >= BmInfo.bmiHeader.biWidth) continue;
+	//	if ( (j+index)  < 0 &&  (j+index) >= 640 * 480) {
+	//		continue;
+	//	}
+	//	else {
+	//		*(lpVHdr->lpData + 3 * (index + j)) = 0;
+	//		*(lpVHdr->lpData + 3 * (index + j) + 1) = 255;
+	//		*(lpVHdr->lpData + 3 * (index + j) + 2) = 0;
+	//	}
+	//}
+	//
+	//for (j = xCenter - 30; j <= xCenter + 30; j++)
+	//{
+	//	int kase = 0;
+	//	kase = yCenter - 30;
 
-		index = j*BmInfo.bmiHeader.biWidth;
-		//if (j<0 || j >= BmInfo.bmiHeader.biWidth) continue;
-		if ((kase + index)  < 0 && (kase + index) >= 640 * 480) {
-			continue;
-		}
-		else {
-			*(lpVHdr->lpData + 3 * (index + kase)) = 0;
-			*(lpVHdr->lpData + 3 * (index + kase) + 1) = 255;
-			*(lpVHdr->lpData + 3 * (index + kase) + 2) = 0;
-		}
-	}
-
-
-	for (j = xCenter - 30; j <= xCenter + 30; j++)
-	{
-		int kase = 0;
-		kase = yCenter + 30;
-
-		index = j*BmInfo.bmiHeader.biWidth;
-		//if (j<0 || j >= BmInfo.bmiHeader.biWidth) continue;
-		if ((kase + index)  < 0 && (kase + index) >= 640 * 480) {
-			continue;
-		}
-		else {
-			*(lpVHdr->lpData + 3 * (index + kase)) = 0;
-			*(lpVHdr->lpData + 3 * (index + kase) + 1) = 255;
-			*(lpVHdr->lpData + 3 * (index + kase) + 2) = 0;
-		}
-	}
+	//	index = j*BmInfo.bmiHeader.biWidth;
+	//	//if (j<0 || j >= BmInfo.bmiHeader.biWidth) continue;
+	//	if ((kase + index)  < 0 && (kase + index) >= 640 * 480) {
+	//		continue;
+	//	}
+	//	else {
+	//		*(lpVHdr->lpData + 3 * (index + kase)) = 0;
+	//		*(lpVHdr->lpData + 3 * (index + kase) + 1) = 255;
+	//		*(lpVHdr->lpData + 3 * (index + kase) + 2) = 0;
+	//	}
+	//}
 
 
+	//for (j = xCenter - 30; j <= xCenter + 30; j++)
+	//{
+	//	int kase = 0;
+	//	kase = yCenter + 30;
 
+	//	index = j*BmInfo.bmiHeader.biWidth;
+	//	//if (j<0 || j >= BmInfo.bmiHeader.biWidth) continue;
+	//	if ((kase + index)  < 0 && (kase + index) >= 640 * 480) {
+	//		continue;
+	//	}
+	//	else {
+	//		*(lpVHdr->lpData + 3 * (index + kase)) = 0;
+	//		*(lpVHdr->lpData + 3 * (index + kase) + 1) = 255;
+	//		*(lpVHdr->lpData + 3 * (index + kase) + 2) = 0;
+	//	}
+	//}
 
 
 	// 차이가 나는 화소의 수를 caption bar에 표시
@@ -352,3 +505,4 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 	return (LRESULT)true;
 
 }
+
