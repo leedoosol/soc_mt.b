@@ -17,4 +17,8 @@ public:
 
 	void setImage(LPVIDEOHDR lpVHdr, int index, BYTE input);
 	void setImage(LPVIDEOHDR lpVHdr, BITMAPINFO BmInfo, int indexX, int indexY, BYTE input);
+	bool isBlue(double fH, double fS, double fV);
+	bool isGreen(double fH, double fS, double fV);
+	bool isRed(double fH, double fS, double fV);
+	bool isYellow(double fH, double fS, double fV);
 };

@@ -19,11 +19,10 @@ using namespace std;
 
 // 카메라 영상 및 정보를 저장하기 위한 전역 변수
 BITMAPINFO BmInfo;
-LPBYTE pImgBuffer;
 LPBYTE preImage;
-LPBYTE backGround;
 CTools tools;
 int isChange[WIDTH][HEIGHT] = { 0, };
+double preHsv[WIDTH][HEIGHT][3] = { 0, };
 int xAverage = 0, yAverage = 0;
 
 char state;
@@ -227,12 +226,6 @@ void CDaejeonTicketDlg::OnDestroy()
 
 	capDriverDisconnect(m_Cap);
 
-	if (pImgBuffer != NULL) {
-		delete[] pImgBuffer;
-	}
-	if (backGround != NULL) {
-		delete[] backGround;
-	}
 	if (preImage != NULL) {
 		delete[] preImage;
 	}
@@ -248,10 +241,7 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 	int indexH, indexW;
 	BYTE currentPixel, currentRed, currentBlue, currentGreen;
 	BYTE prePixel, preRed, preGreen, preBlue;
-	if(pImgBuffer == NULL)
-		pImgBuffer = (LPBYTE)new BYTE[BmInfo.bmiHeader.biHeight*BmInfo.bmiHeader.biWidth];
-	if(backGround == NULL)
-		backGround = (LPBYTE)new BYTE[BmInfo.bmiHeader.biHeight*BmInfo.bmiHeader.biWidth*3+3];
+
 	if(preImage == NULL)
 		preImage = (LPBYTE)new BYTE[BmInfo.bmiHeader.biHeight*BmInfo.bmiHeader.biWidth];
 
@@ -320,27 +310,16 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 					isChange[indexW+1][indexH+2] + isChange[indexW][indexH+2] + 
 					isChange[indexW-1][indexH+2]) > 15;
 
-			/*
-			if (isMask) {
-				counter++;
-				tools.setImage(lpVHdr, index * 3, 255);
-				tools.setImage(lpVHdr, index * 3 + 1, 255);
-				tools.setImage(lpVHdr, index * 3 + 2, 255);
-			}
-			else {
-
-				tools.setImage(lpVHdr, index * 3, 0);
-				tools.setImage(lpVHdr, index * 3 + 1, 0);
-				tools.setImage(lpVHdr, index * 3 + 2, 0);
-
-			}*/
+	
 
 			tools.rgb2hsv(lpVHdr, index, fH, fS, fV);
+			
 
 			//isMask = 0;
 			switch (state) {
 			case 'b':
-				if ((fH >= 210 && fH <= 270) && (fS >= 0.4 && fS <= 1) && (fV >= 0.2 && fV <= 1) && isMask)
+				if ((tools.isBlue(fH,fS,fV) && isMask) ||
+					(tools.isBlue(preHsv[indexW][indexH][0], preHsv[indexW][indexH][1], preHsv[indexW][indexH][2]) && isMask) ) 
 				{
 					xCenter += indexH;
 					yCenter += indexW;
@@ -352,7 +331,8 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 
 				break;
 			case 'g':
-				if ((fH >= 95 && fH <= 145) && (fS >= 0.3 && fS <= 1) && (fV >= 0.1 && fV <= 1) && isMask)
+				if ((tools.isGreen(fH, fS, fV) && isMask) ||
+					(tools.isGreen(preHsv[indexW][indexH][0], preHsv[indexW][indexH][1], preHsv[indexW][indexH][2]) && isMask))
 				{
 					xCenter += indexH;
 					yCenter += indexW;
@@ -363,7 +343,8 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 				}
 				break;
 			case 'r':
-				if ((fH >= 330 || fH <= 30) && (fS >= 0.4 && fS <= 1) && (fV >= 0.2 && fV <= 1) && isMask)
+				if ((tools.isRed(fH, fS, fV) && isMask) ||
+					(tools.isRed(preHsv[indexW][indexH][0], preHsv[indexW][indexH][1], preHsv[indexW][indexH][2]) && isMask))
 				{
 					xCenter += indexH;
 					yCenter += indexW;
@@ -374,7 +355,8 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 				}
 				break;
 			case 'y':
-				if ((fH >= 35 && fH <= 85) && (fS >= 0.4 && fS <= 1) && (fV >= 0.2 && fV <= 1) && isMask)
+				if ((tools.isYellow(fH, fS, fV) && (fV >= 0.2 && fV <= 1) && isMask) ||
+					(tools.isYellow(preHsv[indexW][indexH][0], preHsv[indexW][indexH][1], preHsv[indexW][indexH][2]) && isMask))
 				{
 					xCenter += indexH;
 					yCenter += indexW;
@@ -388,6 +370,9 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 				
 				break;
 			}
+			preHsv[indexW][indexH][0] = fH;
+			preHsv[indexW][indexH][1] = fS;
+			preHsv[indexW][indexH][2] = fV;
 		}
 	}
 	if (counter > 100 && counter < 100000) {
@@ -398,7 +383,7 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 
 	
 	tools.makeCrossPoint(lpVHdr, xAverage, yAverage, BmInfo);
-	cout << counter << endl;
+//	cout << counter << endl;
 	counter = 0;
 
 	//--set mfc title--//
@@ -407,7 +392,6 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 	AfxGetMainWnd()->SetWindowText(strTitle);
 	//--set mfc title--//
 
-	pImgBuffer = NULL;
 
 
 	return (LRESULT)true;
@@ -417,26 +401,22 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 
 void CDaejeonTicketDlg::OnBnClickedOk3()
 {
-	pImgBuffer = NULL;
 	state = 'b';
 }
 
 
 void CDaejeonTicketDlg::OnBnClickedOk4()
 {
-	pImgBuffer = NULL;
 	state = 'g';
 }
 
 
 void CDaejeonTicketDlg::OnBnClickedOk5()
 {
-	pImgBuffer = NULL;
 	state = 'r';
 }
 
 void CDaejeonTicketDlg::OnBnClickedOk6()
 {
-	pImgBuffer = NULL;
 	state = 'y';
 }

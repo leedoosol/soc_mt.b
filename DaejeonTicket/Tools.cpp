@@ -124,3 +124,25 @@ void CTools::setImage(LPVIDEOHDR lpVHdr, BITMAPINFO BmInfo, int indexX, int inde
 
 }
 
+
+
+bool CTools::isBlue(double fH, double fS, double fV)
+{
+	return ((fH >= 210 && fH <= 270) && (fS >= 0.4 && fS <= 1) && (fV >= 0.2 && fV <= 1));
+}
+
+
+bool CTools::isGreen(double fH, double fS, double fV)
+{
+	return (fH >= 95 && fH <= 145) && (fS >= 0.3 && fS <= 1) && (fV >= 0.1 && fV <= 1);
+}
+
+bool CTools::isRed(double fH, double fS, double fV)
+{
+	return (fH >= 340 || fH <= 20) && (fS >= 0.6 && fS <= 1) && (fV >= 0.4 && fV <= 1);
+}
+
+bool CTools::isYellow(double fH, double fS, double fV)
+{
+	return (fH >= 35 && fH <= 85) && (fS >= 0.6 && fS <= 1) && (fV >= 0.4 && fV <= 1);
+}
