@@ -20,9 +20,11 @@ using namespace std;
 // 카메라 영상 및 정보를 저장하기 위한 전역 변수
 BITMAPINFO BmInfo;
 LPBYTE pImgBuffer;
-LPBYTE currentImage;
 LPBYTE preImage;
+LPBYTE backGround;
 CTools tools;
+int isChange[WIDTH][HEIGHT] = { 0, };
+int xAverage = 0, yAverage = 0;
 
 char state;
 
@@ -228,8 +230,8 @@ void CDaejeonTicketDlg::OnDestroy()
 	if (pImgBuffer != NULL) {
 		delete[] pImgBuffer;
 	}
-	if (currentImage != NULL) {
-		delete[] currentImage;
+	if (backGround != NULL) {
+		delete[] backGround;
 	}
 	if (preImage != NULL) {
 		delete[] preImage;
@@ -248,8 +250,8 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 	BYTE prePixel, preRed, preGreen, preBlue;
 	if(pImgBuffer == NULL)
 		pImgBuffer = (LPBYTE)new BYTE[BmInfo.bmiHeader.biHeight*BmInfo.bmiHeader.biWidth];
-	if(currentImage == NULL)
-		currentImage = (LPBYTE)new BYTE[BmInfo.bmiHeader.biHeight*BmInfo.bmiHeader.biWidth];
+	if(backGround == NULL)
+		backGround = (LPBYTE)new BYTE[BmInfo.bmiHeader.biHeight*BmInfo.bmiHeader.biWidth*3+3];
 	if(preImage == NULL)
 		preImage = (LPBYTE)new BYTE[BmInfo.bmiHeader.biHeight*BmInfo.bmiHeader.biWidth];
 
@@ -261,61 +263,29 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 			// indexW is width
 			index = indexH*BmInfo.bmiHeader.biWidth + indexW;
 
-			tools.rgb2hsv(lpVHdr, index, fH, fS, fV);
-
+			
 			currentBlue = tools.getImage(lpVHdr, index * 3);
 			currentGreen = tools.getImage(lpVHdr, index * 3 + 1);
 			currentRed = tools.getImage(lpVHdr, index * 3 + 2);
 			// copy image to currentImage BYTE value.
 
 			currentPixel = (currentBlue + currentGreen + currentRed) / 3;
-			*(currentImage + index) = currentPixel;
 			prePixel = *(preImage + index);
-			
+
 			bool logic = 0;
-			logic = abs(currentPixel - prePixel) > 10;
-			
+			logic = abs(currentPixel - prePixel) > 20;
 
-		/*	if (logic) {
-				tools.setImage(lpVHdr, index * 3, 255);
-				tools.setImage(lpVHdr, index * 3 + 1, 255);
-				tools.setImage(lpVHdr, index * 3 + 2, 255);
-				
+
+			if (logic) {
+				isChange[indexW][indexH] = 1;
 			}
+
 			else {
-				tools.setImage(lpVHdr, index * 3, 0);
-				tools.setImage(lpVHdr, index * 3 + 1, 0);
-				tools.setImage(lpVHdr, index * 3 + 2, 0);
-
+				isChange[indexW][indexH] = 0;
 			}
-*/
-			switch (state) {
-			case 'b':
-				if ((fH >= 210 && fH <= 270) && (fS >= 0.4 && fS <= 1) && (fV >= 0.2 && fV <= 1) && logic)
-					*(pImgBuffer + index) = 255;
-				break;
-			case 'g':
-				if ((fH >= 95 && fH <= 145) && (fS >= 0.3 && fS <= 1) && (fV >= 0.1 && fV <= 1) && logic)
-					*(pImgBuffer + index) = 255;
-				break;
-			case 'r':
-				if ((fH >= 330 || fH <= 30) && (fS >= 0.4 && fS <= 1) && (fV >= 0.2 && fV <= 1) && logic)
-					*(pImgBuffer + index) = 255;
-				break;
-			case 'y':
-				if ((fH >= 35 && fH <= 85) && (fS >= 0.4 && fS <= 1) && (fV >= 0.2 && fV <= 1) && logic)
-					*(pImgBuffer + index) = 255;
-				break;
-			default:
-				*(pImgBuffer + index) = 0;
-				break;
-			}
-
-
-
 
 			//-- copy currentImage to preImage --//
-			*(preImage + index) = *(currentImage + index);
+			*(preImage + index) = currentPixel;
 			//-- copy currentImage to preImage --//
 		}
 	}
@@ -324,30 +294,116 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 
 	//--calculate centor position--//
 	int xCenter = 0, yCenter = 0;
+	
 	for (indexH = 0; indexH<BmInfo.bmiHeader.biHeight; indexH++)
 	{
-		index = indexH*BmInfo.bmiHeader.biWidth;
+		
 		for (indexW = 0; indexW<BmInfo.bmiHeader.biWidth; indexW++)
 		{
-			if (*(pImgBuffer + index + indexW) == 255)
-			{
-				xCenter += indexH;
-				yCenter += indexW;
+			index = indexH*BmInfo.bmiHeader.biWidth + indexW;
+			bool isMask = 0;
+			if (indexW > 1 && indexH > 1 &&
+				indexW < (BmInfo.bmiHeader.biWidth - 2) &&
+				indexH < (BmInfo.bmiHeader.biHeight - 2))
+				isMask =
+				(isChange[indexW][indexH] + isChange[indexW - 1][indexH - 1] +
+					isChange[indexW][indexH - 1] + isChange[indexW - 1][indexH] +
+					isChange[indexW + 1][indexH + 1] + isChange[indexW + 1][indexH] +
+					isChange[indexW][indexH + 1] + isChange[indexW - 1][indexH + 1] +
+					isChange[indexW + 1][indexH - 1] + isChange[indexW-2][indexH-2] + 
+					isChange[indexW-2][indexH-1] + isChange[indexW-2][indexH] + 
+					isChange[indexW-2][indexH+1] + isChange[indexW-2][indexH+2] + 
+					isChange[indexW-1][indexH-2] + isChange[indexW][indexH-2] + 
+					isChange[indexW+1][indexH-2] + isChange[indexW+2][indexH-2] + 
+					isChange[indexW+2][indexH-1] + isChange[indexW+2][indexH] + 
+					isChange[indexW+2][indexH+1] + isChange[indexW+2][indexH+2] + 
+					isChange[indexW+1][indexH+2] + isChange[indexW][indexH+2] + 
+					isChange[indexW-1][indexH+2]) > 15;
+
+			/*
+			if (isMask) {
 				counter++;
+				tools.setImage(lpVHdr, index * 3, 255);
+				tools.setImage(lpVHdr, index * 3 + 1, 255);
+				tools.setImage(lpVHdr, index * 3 + 2, 255);
+			}
+			else {
+
+				tools.setImage(lpVHdr, index * 3, 0);
+				tools.setImage(lpVHdr, index * 3 + 1, 0);
+				tools.setImage(lpVHdr, index * 3 + 2, 0);
+
+			}*/
+
+			tools.rgb2hsv(lpVHdr, index, fH, fS, fV);
+
+			//isMask = 0;
+			switch (state) {
+			case 'b':
+				if ((fH >= 210 && fH <= 270) && (fS >= 0.4 && fS <= 1) && (fV >= 0.2 && fV <= 1) && isMask)
+				{
+					xCenter += indexH;
+					yCenter += indexW;
+					counter++;
+					tools.setImage(lpVHdr, index * 3, 255);
+					tools.setImage(lpVHdr, index * 3 + 1, 255);
+					tools.setImage(lpVHdr, index * 3 + 2, 255);
+				}
+
+				break;
+			case 'g':
+				if ((fH >= 95 && fH <= 145) && (fS >= 0.3 && fS <= 1) && (fV >= 0.1 && fV <= 1) && isMask)
+				{
+					xCenter += indexH;
+					yCenter += indexW;
+					counter++;
+					tools.setImage(lpVHdr, index * 3, 255);
+					tools.setImage(lpVHdr, index * 3 + 1, 255);
+					tools.setImage(lpVHdr, index * 3 + 2, 255);
+				}
+				break;
+			case 'r':
+				if ((fH >= 330 || fH <= 30) && (fS >= 0.4 && fS <= 1) && (fV >= 0.2 && fV <= 1) && isMask)
+				{
+					xCenter += indexH;
+					yCenter += indexW;
+					counter++;
+					tools.setImage(lpVHdr, index * 3, 255);
+					tools.setImage(lpVHdr, index * 3 + 1, 255);
+					tools.setImage(lpVHdr, index * 3 + 2, 255);
+				}
+				break;
+			case 'y':
+				if ((fH >= 35 && fH <= 85) && (fS >= 0.4 && fS <= 1) && (fV >= 0.2 && fV <= 1) && isMask)
+				{
+					xCenter += indexH;
+					yCenter += indexW;
+					counter++;
+					tools.setImage(lpVHdr, index * 3, 255);
+					tools.setImage(lpVHdr, index * 3 + 1, 255);
+					tools.setImage(lpVHdr, index * 3 + 2, 255);
+				}
+				break;
+			default:
+				
+				break;
 			}
 		}
 	}
-	xCenter = (int)((float)xCenter / (float)counter);
-	yCenter = (int)((float)yCenter / (float)counter);
+	if (counter > 100 && counter < 100000) {
+		xAverage = (int)((float)xCenter / (float)counter);
+		yAverage = (int)((float)yCenter / (float)counter);
+	}
 	//--calculate centor position--//
 
 	
-	tools.makeCrossPoint(lpVHdr, xCenter, yCenter, BmInfo);
-
+	tools.makeCrossPoint(lpVHdr, xAverage, yAverage, BmInfo);
+	cout << counter << endl;
+	counter = 0;
 
 	//--set mfc title--//
 	CString  strTitle;
-	strTitle.Format(_T("Binary Tracker (%d,%d)"), xCenter, yCenter);
+	strTitle.Format(_T("Center is (%d,%d)"), xAverage, yAverage);
 	AfxGetMainWnd()->SetWindowText(strTitle);
 	//--set mfc title--//
 
