@@ -6,7 +6,7 @@
 
 #include "vfw.h"
 #include "afxwin.h"
-
+#include "Tools.h"
 #define    _DEF_WEBCAM        1000
 
 LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr);
@@ -49,4 +49,11 @@ public:
 	afx_msg void OnBnClickedOk3();
 	afx_msg void OnBnClickedOk4();
 	afx_msg void OnBnClickedOk5();
+
+
+
+	bool isGreen;
+	bool isYellow;
+	bool isBlue;
+	bool isRed;
 };

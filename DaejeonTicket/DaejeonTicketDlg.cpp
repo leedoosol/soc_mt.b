@@ -10,9 +10,8 @@
 #include <Windows.h>
 using namespace std;
 
-#define COL 640
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define HEIGHT 480
+#define WIDTH 640
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -21,6 +20,10 @@ using namespace std;
 // 카메라 영상 및 정보를 저장하기 위한 전역 변수
 BITMAPINFO BmInfo;
 LPBYTE pImgBuffer;
+LPBYTE currentImage;
+LPBYTE preImage;
+CTools tools;
+
 char state;
 
 // win32 program에서 console창을 띄우기 위한 방법
@@ -33,6 +36,7 @@ class CAboutDlg : public CDialogEx
 {
 public:
 	CAboutDlg();
+	
 
 // 대화 상자 데이터입니다.
 #ifdef AFX_DESIGN_TIME
@@ -66,6 +70,10 @@ END_MESSAGE_MAP()
 
 CDaejeonTicketDlg::CDaejeonTicketDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_DAEJEONTICKET_DIALOG, pParent)
+	, isGreen(false)
+	, isYellow(false)
+	, isBlue(false)
+	, isRed(false)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -118,7 +126,7 @@ BOOL CDaejeonTicketDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
-	RECT m_Rect = { 0, 0, 640, 480 };     // 생성하고 싶은 사이즈를 RECT 변수에 초기화. 
+	RECT m_Rect = { 0, 0, WIDTH, HEIGHT };     // 생성하고 싶은 사이즈를 RECT 변수에 초기화. 
 										  //  여기서는 1024x768로 설정하였다.
 	AdjustWindowRect(&m_Rect, WS_OVERLAPPEDWINDOW, FALSE);
 	int width = m_Rect.right - m_Rect.left;
@@ -127,8 +135,8 @@ BOOL CDaejeonTicketDlg::OnInitDialog()
 
 	// 윈도우 생성
 	m_Cap = capCreateCaptureWindow(TEXT("original_image"), WS_CHILD
-		| WS_VISIBLE, 0, 0, 640, 480, this->m_hWnd, NULL);
-
+		| WS_VISIBLE, 0, 0, WIDTH, HEIGHT, this->m_hWnd, NULL);
+	cout << "PROGRAM START";
 
 	// 콜백함수 지정
 	if (capSetCallbackOnFrame(m_Cap, CallbackOnFrame) == FALSE) {
@@ -143,7 +151,7 @@ BOOL CDaejeonTicketDlg::OnInitDialog()
 	
 
 	// 카메라 설정
-	capPreviewRate(m_Cap, 33);    // 초당 프레임 지정
+	capPreviewRate(m_Cap, 30);    // 초당 프레임 지정
 	capOverlay(m_Cap, false);
 	capPreview(m_Cap, true);        // 미리보기 기능 설정
 
@@ -220,135 +228,136 @@ void CDaejeonTicketDlg::OnDestroy()
 	if (pImgBuffer != NULL) {
 		delete[] pImgBuffer;
 	}
+	if (currentImage != NULL) {
+		delete[] currentImage;
+	}
+	if (preImage != NULL) {
+		delete[] preImage;
+	}
 }
 
 LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 {
 
-	/*
-	영상 데이터는
-	lpVHdr->lpData 에 1차원 배열로 저장되어 있다.
-	*/
-	double fB, fG, fR, fH, fS, fV;
-	int  i, j, index, counter = 0;
-	pImgBuffer = (LPBYTE)new BYTE[BmInfo.bmiHeader.biHeight*BmInfo.bmiHeader.biWidth];
 
-	for (i = 0; i < BmInfo.bmiHeader.biWidth*BmInfo.bmiHeader.biHeight; i++) {
-		fB = *(lpVHdr->lpData + (i * 3)) / 255.0;
-		fG = *(lpVHdr->lpData + (i * 3) + 1) / 255.0;
-		fR = *(lpVHdr->lpData + (i * 3) + 2) / 255.0;
+	//--init value--// 
+	double fH, fS, fV;
+	int  i, j, index=0, counter = 0;
+	int indexH, indexW;
+	BYTE currentPixel, currentRed, currentBlue, currentGreen;
+	BYTE prePixel, preRed, preGreen, preBlue;
+	if(pImgBuffer == NULL)
+		pImgBuffer = (LPBYTE)new BYTE[BmInfo.bmiHeader.biHeight*BmInfo.bmiHeader.biWidth];
+	if(currentImage == NULL)
+		currentImage = (LPBYTE)new BYTE[BmInfo.bmiHeader.biHeight*BmInfo.bmiHeader.biWidth*3+3];
+	if(preImage == NULL)
+		preImage = (LPBYTE)new BYTE[BmInfo.bmiHeader.biHeight*BmInfo.bmiHeader.biWidth * 3 + 3];
+	//--init value--//
 
-		double fCMax = MAX(MAX(fR, fG), fB);
-		double fCMin = MIN(MIN(fR, fG), fB);
-		double fDelta = fCMax - fCMin;
+	for (indexH = 0; indexH < BmInfo.bmiHeader.biHeight; indexH++)
+	{ // i is height
+		for (indexW = 0; indexW < BmInfo.bmiHeader.biWidth; indexW++) {
+			// j is width
+			index = indexH*BmInfo.bmiHeader.biWidth + indexW;
 
-		if (fDelta > 0) {
-			if (fCMax == fR) {
-				fH = 60 * (fmod(((fG - fB) / fDelta), 6));
-			}
-			else if (fCMax == fG) {
-				fH = 60 * (((fB - fR) / fDelta) + 2);
-			}
-			else if (fCMax == fB) {
-				fH = 60 * (((fR - fG) / fDelta) + 4);
-			}
+			tools.rgb2hsv(lpVHdr, index, fH, fS, fV);
 
-			if (fCMax > 0) {
-				fS = fDelta / fCMax;
+			*(currentImage + index * 3) = tools.getImage(lpVHdr, index * 3);
+			*(currentImage + (index * 3 + 1)) = tools.getImage(lpVHdr, index * 3 + 1);
+			*(currentImage + (index * 3 + 2)) = tools.getImage(lpVHdr, index * 3 + 2);
+			// copy image to currentImage BYTE value.
+
+			currentBlue = *(currentImage + index * 3);
+			currentGreen = *(currentImage + (index * 3 + 1));
+			currentRed = *(currentImage + (index * 3 + 2));
+
+			preBlue = *(preImage + index * 3);
+			preGreen = *(preImage + index * 3 + 1);
+			preRed = *(preImage + index * 3 + 2);
+
+			currentPixel = (currentBlue + currentGreen + currentRed) / 3;
+			prePixel = (preBlue + preGreen + preRed) / 3;
+
+
+			if (abs(currentPixel - prePixel) > 20) {
+				tools.setImage(lpVHdr, index * 3, 255);
+				tools.setImage(lpVHdr, index * 3 + 1, 255);
+				tools.setImage(lpVHdr, index * 3 + 2, 255);
+				
 			}
 			else {
-				fS = 0;
+				tools.setImage(lpVHdr, index * 3, 0);
+				tools.setImage(lpVHdr, index * 3 + 1, 0);
+				tools.setImage(lpVHdr, index * 3 + 2, 0);
+
 			}
 
-			fV = fCMax;
-		}
-		else {
-			fH = 0;
-			fS = 0;
-			fV = fCMax;
-		}
 
-		if (fH < 0) {
-			fH = 360 + fH;
-		}
+			switch (state) {
+			case 'b':
+				if ((fH >= 210 && fH <= 270) && (fS >= 0.4 && fS <= 1) && (fV >= 0.2 && fV <= 1))
+					*(pImgBuffer + index) = 255;
+				break;
+			case 'g':
+				if ((fH >= 95 && fH <= 145) && (fS >= 0.3 && fS <= 1) && (fV >= 0.1 && fV <= 1))
+					*(pImgBuffer + index) = 255;
+				break;
+			case 'r':
+				if ((fH >= 330 || fH <= 30) && (fS >= 0.4 && fS <= 1) && (fV >= 0.2 && fV <= 1))
+					*(pImgBuffer + index) = 255;
+				break;
+			case 'y':
+				if ((fH >= 35 && fH <= 85) && (fS >= 0.4 && fS <= 1) && (fV >= 0.2 && fV <= 1))
+					*(pImgBuffer + index) = 255;
+				break;
+			default:
+				*(pImgBuffer + index) = 0;
+				break;
+			}
 
-		//printf("H:%.2lf | S:%.2lf | V:%.2lf\n", fH, fS, fV);
-		//Sleep(1500);
 
 
-		switch (state) {
-		case 'b':
-			if ((fH >= 210 && fH <= 270) && (fS >= 0.4 && fS <= 1) && (fV >= 0.2 && fV <= 1))
-				*(pImgBuffer + i) = 255;
-			break;
-		case 'g':
-			if ((fH >= 95 && fH <= 145) && (fS >= 0.3 && fS <= 1) && (fV >= 0.1 && fV <= 1))
-				*(pImgBuffer + i) = 255;
-			break;
-		case 'r':
-			if ((fH >= 330 || fH <= 30) && (fS >= 0.4 && fS <= 1) && (fV >= 0.2 && fV <= 1))
-				*(pImgBuffer + i) = 255;
-			break;
-		case 'y':
-			if ((fH >= 35 && fH <= 85) && (fS >= 0.4 && fS <= 1) && (fV >= 0.2 && fV <= 1))
-				*(pImgBuffer + i) = 255;
-			break;
-		default:
-			*(pImgBuffer + i) = 0;
-			break;
+
+			//-- copy currentImage to preImage --//
+			*(preImage + index * 3) = *(currentImage + index * 3);
+			*(preImage + (index * 3 + 1)) = *(currentImage + (index * 3 + 1));
+			*(preImage + (index * 3 + 2)) = *(currentImage + (index * 3 + 2));
+			//-- copy currentImage to preImage --//
 		}
 	}
+	
 
 
+	//--calculate centor position--//
 	int xCenter = 0, yCenter = 0;
-	for (i = 0; i<BmInfo.bmiHeader.biHeight; i++)
+	for (indexH = 0; indexH<BmInfo.bmiHeader.biHeight; indexH++)
 	{
-		index = i*BmInfo.bmiHeader.biWidth;
-		for (j = 0; j<BmInfo.bmiHeader.biWidth; j++)
+		index = indexH*BmInfo.bmiHeader.biWidth;
+		for (indexW = 0; indexW<BmInfo.bmiHeader.biWidth; indexW++)
 		{
-			if (*(pImgBuffer + index + j) == 255)
+			if (*(pImgBuffer + index + indexW) == 255)
 			{
-				xCenter += i;
-				yCenter += j;
+				xCenter += indexH;
+				yCenter += indexW;
 				counter++;
 			}
 		}
 	}
-
 	xCenter = (int)((float)xCenter / (float)counter);
 	yCenter = (int)((float)yCenter / (float)counter);
+	//--calculate centor position--//
+
 	
-	//??
-	//int kasd = 0;
-	//kasd = (float)xCenter + (int)30;
-	//int kase = 0;
-	//kase = (float)xCenter - (int)30;
+	tools.makeCrossPoint(lpVHdr, xCenter, yCenter, BmInfo);
 
 
-	for (i = xCenter - 15; i <= xCenter + 15; i++)
-	{
-		if (i<0 || i >= BmInfo.bmiHeader.biHeight) continue;
-		index = i*BmInfo.bmiHeader.biWidth;
-		*(lpVHdr->lpData + 3 * (index + yCenter)) = 0;
-		*(lpVHdr->lpData + 3 * (index + yCenter) + 1) = 0;
-		*(lpVHdr->lpData + 3 * (index + yCenter) + 2) = 0;
-	}
-
-	index = xCenter*BmInfo.bmiHeader.biWidth;
-	for (j = yCenter - 15; j <= yCenter + 15; j++)
-	{
-		if (j<0 || j >= BmInfo.bmiHeader.biWidth) continue;
-		*(lpVHdr->lpData + 3 * (index + j)) = 0;
-		*(lpVHdr->lpData + 3 * (index + j) + 1) = 0;
-		*(lpVHdr->lpData + 3 * (index + j) + 2) = 0;
-	}
+	//--set mfc title--//
+	CString  strTitle;
+	strTitle.Format(_T("Binary Tracker (%d,%d)"), xCenter, yCenter);
+	AfxGetMainWnd()->SetWindowText(strTitle);
+	//--set mfc title--//
 
 
-
-	//// 차이가 나는 화소의 수를 caption bar에 표시
-	//CString  strTitle;
-	////strTitle.Format(_T("Binary Tracker (%d,%d)"), xCenter, yCenter);
-	//AfxGetMainWnd()->SetWindowText(strTitle);
 
 	return (LRESULT)true;
 
@@ -357,22 +366,26 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 
 void CDaejeonTicketDlg::OnBnClickedOk3()
 {
+	pImgBuffer = NULL;
 	state = 'b';
 }
 
 
 void CDaejeonTicketDlg::OnBnClickedOk4()
 {
+	pImgBuffer = NULL;
 	state = 'g';
 }
 
 
 void CDaejeonTicketDlg::OnBnClickedOk5()
 {
+	pImgBuffer = NULL;
 	state = 'r';
 }
 
 void CDaejeonTicketDlg::OnBnClickedOk6()
 {
+	pImgBuffer = NULL;
 	state = 'y';
 }
