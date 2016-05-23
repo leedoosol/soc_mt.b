@@ -10,7 +10,6 @@
 #define    _DEF_WEBCAM        1000
 
 LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr);
-LRESULT CALLBACK CallbackOnFrame2(HWND hWnd, LPVIDEOHDR lpVHdr);
 
 // CDaejeonTicketDlg 대화 상자
 class CDaejeonTicketDlg : public CDialogEx
