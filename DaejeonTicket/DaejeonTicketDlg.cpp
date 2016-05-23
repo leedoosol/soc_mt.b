@@ -242,44 +242,41 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 
 	//--init value--// 
 	double fH, fS, fV;
-	int  i, j, index=0, counter = 0;
+	int index=0, counter = 0;
 	int indexH, indexW;
 	BYTE currentPixel, currentRed, currentBlue, currentGreen;
 	BYTE prePixel, preRed, preGreen, preBlue;
 	if(pImgBuffer == NULL)
 		pImgBuffer = (LPBYTE)new BYTE[BmInfo.bmiHeader.biHeight*BmInfo.bmiHeader.biWidth];
 	if(currentImage == NULL)
-		currentImage = (LPBYTE)new BYTE[BmInfo.bmiHeader.biHeight*BmInfo.bmiHeader.biWidth*3+3];
+		currentImage = (LPBYTE)new BYTE[BmInfo.bmiHeader.biHeight*BmInfo.bmiHeader.biWidth];
 	if(preImage == NULL)
-		preImage = (LPBYTE)new BYTE[BmInfo.bmiHeader.biHeight*BmInfo.bmiHeader.biWidth * 3 + 3];
+		preImage = (LPBYTE)new BYTE[BmInfo.bmiHeader.biHeight*BmInfo.bmiHeader.biWidth];
+
 	//--init value--//
 
 	for (indexH = 0; indexH < BmInfo.bmiHeader.biHeight; indexH++)
-	{ // i is height
+	{ // indexH is height
 		for (indexW = 0; indexW < BmInfo.bmiHeader.biWidth; indexW++) {
-			// j is width
+			// indexW is width
 			index = indexH*BmInfo.bmiHeader.biWidth + indexW;
 
 			tools.rgb2hsv(lpVHdr, index, fH, fS, fV);
 
-			*(currentImage + index * 3) = tools.getImage(lpVHdr, index * 3);
-			*(currentImage + (index * 3 + 1)) = tools.getImage(lpVHdr, index * 3 + 1);
-			*(currentImage + (index * 3 + 2)) = tools.getImage(lpVHdr, index * 3 + 2);
+			currentBlue = tools.getImage(lpVHdr, index * 3);
+			currentGreen = tools.getImage(lpVHdr, index * 3 + 1);
+			currentRed = tools.getImage(lpVHdr, index * 3 + 2);
 			// copy image to currentImage BYTE value.
 
-			currentBlue = *(currentImage + index * 3);
-			currentGreen = *(currentImage + (index * 3 + 1));
-			currentRed = *(currentImage + (index * 3 + 2));
-
-			preBlue = *(preImage + index * 3);
-			preGreen = *(preImage + index * 3 + 1);
-			preRed = *(preImage + index * 3 + 2);
-
 			currentPixel = (currentBlue + currentGreen + currentRed) / 3;
-			prePixel = (preBlue + preGreen + preRed) / 3;
+			*(currentImage + index) = currentPixel;
+			prePixel = *(preImage + index);
+			
+			bool logic = 0;
+			logic = abs(currentPixel - prePixel) > 10;
+			
 
-
-			if (abs(currentPixel - prePixel) > 20) {
+		/*	if (logic) {
 				tools.setImage(lpVHdr, index * 3, 255);
 				tools.setImage(lpVHdr, index * 3 + 1, 255);
 				tools.setImage(lpVHdr, index * 3 + 2, 255);
@@ -291,23 +288,22 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 				tools.setImage(lpVHdr, index * 3 + 2, 0);
 
 			}
-
-
+*/
 			switch (state) {
 			case 'b':
-				if ((fH >= 210 && fH <= 270) && (fS >= 0.4 && fS <= 1) && (fV >= 0.2 && fV <= 1))
+				if ((fH >= 210 && fH <= 270) && (fS >= 0.4 && fS <= 1) && (fV >= 0.2 && fV <= 1) && logic)
 					*(pImgBuffer + index) = 255;
 				break;
 			case 'g':
-				if ((fH >= 95 && fH <= 145) && (fS >= 0.3 && fS <= 1) && (fV >= 0.1 && fV <= 1))
+				if ((fH >= 95 && fH <= 145) && (fS >= 0.3 && fS <= 1) && (fV >= 0.1 && fV <= 1) && logic)
 					*(pImgBuffer + index) = 255;
 				break;
 			case 'r':
-				if ((fH >= 330 || fH <= 30) && (fS >= 0.4 && fS <= 1) && (fV >= 0.2 && fV <= 1))
+				if ((fH >= 330 || fH <= 30) && (fS >= 0.4 && fS <= 1) && (fV >= 0.2 && fV <= 1) && logic)
 					*(pImgBuffer + index) = 255;
 				break;
 			case 'y':
-				if ((fH >= 35 && fH <= 85) && (fS >= 0.4 && fS <= 1) && (fV >= 0.2 && fV <= 1))
+				if ((fH >= 35 && fH <= 85) && (fS >= 0.4 && fS <= 1) && (fV >= 0.2 && fV <= 1) && logic)
 					*(pImgBuffer + index) = 255;
 				break;
 			default:
@@ -319,9 +315,7 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 
 
 			//-- copy currentImage to preImage --//
-			*(preImage + index * 3) = *(currentImage + index * 3);
-			*(preImage + (index * 3 + 1)) = *(currentImage + (index * 3 + 1));
-			*(preImage + (index * 3 + 2)) = *(currentImage + (index * 3 + 2));
+			*(preImage + index) = *(currentImage + index);
 			//-- copy currentImage to preImage --//
 		}
 	}
@@ -357,6 +351,7 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 	AfxGetMainWnd()->SetWindowText(strTitle);
 	//--set mfc title--//
 
+	pImgBuffer = NULL;
 
 
 	return (LRESULT)true;
