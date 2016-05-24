@@ -27,8 +27,9 @@ double preHsv[WIDTH][HEIGHT][3] = { 0, };
 int xAverage[LENGTH] = { 0, };
 int yAverage[LENGTH] = { 0, };
 char whatColor='N';
-
 char state;
+
+
 
 // win32 program에서 console창을 띄우기 위한 방법
 // printf를 사용하기 위해 stdio.h를 include
@@ -236,7 +237,12 @@ void CDaejeonTicketDlg::OnDestroy()
 
 LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 {
+	CButton* blueButton = (CButton*)GetDlgItem(hWnd,IDC_RADIO_BLUE);
+	CButton* greenButton = (CButton*)GetDlgItem(hWnd, IDC_RADIO_GREEN);
+	CButton* redButton = (CButton*)GetDlgItem(hWnd, IDC_RADIO_RED);
+	CButton* yellowButton = (CButton*)GetDlgItem(hWnd, IDC_RADIO_YELLOW);
 
+	
 
 	//--init value--// 
 	double fH, fS, fV;
@@ -482,11 +488,6 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 	int rx, ry;
 	float angle;
 
-	// xs=abs(xp-x)+1; ys=abs(yp-y);
-	// if( ys > 0 && xs > 0 )angle = 180/Pi*atan(ys/xs);
-	// else if (ys > 0 && xs< 0) angle = 180 - 180/Pi*atan(ys/xs);
-	// else if (ys < 0 &&xs < 0) angle = 180 + 180/Pi*atan(ys/xs);
-	// else if (ys < 0 && xs> 0) angle = 360 - 180/Pi*atan(ys/xs);
 	xs = xp - x;
 	if (xs == 0)xs = xs + 1;
 	angle = atan2(yp - y, xs);
@@ -547,4 +548,13 @@ void CDaejeonTicketDlg::OnBnClickedOk5()
 void CDaejeonTicketDlg::OnBnClickedOk6()
 {
 	state = 'y';
+}
+
+
+
+
+
+void CDaejeonTicketDlg::OnBnClickedRadio5()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 }

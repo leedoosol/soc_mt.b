@@ -58,4 +58,5 @@ public:
 	bool isYellow;
 	bool isBlue;
 	bool isRed;
+	afx_msg void OnBnClickedRadio5();
 };
