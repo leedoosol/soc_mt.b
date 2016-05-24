@@ -21,4 +21,5 @@ public:
 	bool isGreen(double fH, double fS, double fV);
 	bool isRed(double fH, double fS, double fV);
 	bool isYellow(double fH, double fS, double fV);
+	void makeLine(LPVIDEOHDR lpVHdr, BITMAPINFO BmInfo, int xStart, int xEnd, int yStart, int yEnd);
 };

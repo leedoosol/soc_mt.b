@@ -12,7 +12,8 @@ using namespace std;
 
 #define HEIGHT 480
 #define WIDTH 640
-
+#define LENGTH 15
+#define Pi				3.141592
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -23,7 +24,9 @@ LPBYTE preImage;
 CTools tools;
 int isChange[WIDTH][HEIGHT] = { 0, };
 double preHsv[WIDTH][HEIGHT][3] = { 0, };
-int xAverage = 0, yAverage = 0;
+int xAverage[LENGTH] = { 0, };
+int yAverage[LENGTH] = { 0, };
+char whatColor='N';
 
 char state;
 
@@ -237,12 +240,13 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 
 	//--init value--// 
 	double fH, fS, fV;
-	int index=0, counter = 0;
+	int index = 0, counter = 0;
+	int counterR = 0, counterG = 0, counterB = 0, counterY = 0;
 	int indexH, indexW;
 	BYTE currentPixel, currentRed, currentBlue, currentGreen;
 	BYTE prePixel, preRed, preGreen, preBlue;
 
-	if(preImage == NULL)
+	if (preImage == NULL)
 		preImage = (LPBYTE)new BYTE[BmInfo.bmiHeader.biHeight*BmInfo.bmiHeader.biWidth];
 
 	//--init value--//
@@ -253,7 +257,7 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 			// indexW is width
 			index = indexH*BmInfo.bmiHeader.biWidth + indexW;
 
-			
+
 			currentBlue = tools.getImage(lpVHdr, index * 3);
 			currentGreen = tools.getImage(lpVHdr, index * 3 + 1);
 			currentRed = tools.getImage(lpVHdr, index * 3 + 2);
@@ -276,19 +280,21 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 
 			//-- copy currentImage to preImage --//
 			*(preImage + index) = currentPixel;
-			//-- copy currentImage to preImage --//
 		}
 	}
-	
+
 
 
 	//--calculate centor position--//
 	int xCenter = 0, yCenter = 0;
-	
-	for (indexH = 0; indexH<BmInfo.bmiHeader.biHeight; indexH++)
+	int xCenterR = 0, yCenterR = 0;
+	int xCenterG = 0, yCenterG = 0;
+	int xCenterB = 0, yCenterB = 0;
+	int xCenterY = 0, yCenterY = 0;
+	for (indexH = 0; indexH < BmInfo.bmiHeader.biHeight; indexH++)
 	{
-		
-		for (indexW = 0; indexW<BmInfo.bmiHeader.biWidth; indexW++)
+
+		for (indexW = 0; indexW < BmInfo.bmiHeader.biWidth; indexW++)
 		{
 			index = indexH*BmInfo.bmiHeader.biWidth + indexW;
 			bool isMask = 0;
@@ -300,95 +306,217 @@ LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr)
 					isChange[indexW][indexH - 1] + isChange[indexW - 1][indexH] +
 					isChange[indexW + 1][indexH + 1] + isChange[indexW + 1][indexH] +
 					isChange[indexW][indexH + 1] + isChange[indexW - 1][indexH + 1] +
-					isChange[indexW + 1][indexH - 1] + isChange[indexW-2][indexH-2] + 
-					isChange[indexW-2][indexH-1] + isChange[indexW-2][indexH] + 
-					isChange[indexW-2][indexH+1] + isChange[indexW-2][indexH+2] + 
-					isChange[indexW-1][indexH-2] + isChange[indexW][indexH-2] + 
-					isChange[indexW+1][indexH-2] + isChange[indexW+2][indexH-2] + 
-					isChange[indexW+2][indexH-1] + isChange[indexW+2][indexH] + 
-					isChange[indexW+2][indexH+1] + isChange[indexW+2][indexH+2] + 
-					isChange[indexW+1][indexH+2] + isChange[indexW][indexH+2] + 
-					isChange[indexW-1][indexH+2]) > 15;
+					isChange[indexW + 1][indexH - 1] + isChange[indexW - 2][indexH - 2] +
+					isChange[indexW - 2][indexH - 1] + isChange[indexW - 2][indexH] +
+					isChange[indexW - 2][indexH + 1] + isChange[indexW - 2][indexH + 2] +
+					isChange[indexW - 1][indexH - 2] + isChange[indexW][indexH - 2] +
+					isChange[indexW + 1][indexH - 2] + isChange[indexW + 2][indexH - 2] +
+					isChange[indexW + 2][indexH - 1] + isChange[indexW + 2][indexH] +
+					isChange[indexW + 2][indexH + 1] + isChange[indexW + 2][indexH + 2] +
+					isChange[indexW + 1][indexH + 2] + isChange[indexW][indexH + 2] +
+					isChange[indexW - 1][indexH + 2]) > 15;
 
-	
+
 
 			tools.rgb2hsv(lpVHdr, index, fH, fS, fV);
-			
+
 
 			//isMask = 0;
 			switch (state) {
 			case 'b':
-				if ((tools.isBlue(fH,fS,fV) && isMask) ||
-					(tools.isBlue(preHsv[indexW][indexH][0], preHsv[indexW][indexH][1], preHsv[indexW][indexH][2]) && isMask) ) 
-				{
-					xCenter += indexH;
-					yCenter += indexW;
-					counter++;
-					tools.setImage(lpVHdr, index * 3, 255);
-					tools.setImage(lpVHdr, index * 3 + 1, 255);
-					tools.setImage(lpVHdr, index * 3 + 2, 255);
-				}
+				if(isMask)
+					if (tools.isBlue(fH, fS, fV) ||
+						tools.isBlue(preHsv[indexW][indexH][0], preHsv[indexW][indexH][1], preHsv[indexW][indexH][2]))
+					{
+						whatColor = 'B';
+						xCenter += indexH;
+						yCenter += indexW;
+						counter++;
+						tools.setImage(lpVHdr, index * 3, 255);
+						tools.setImage(lpVHdr, index * 3 + 1, 255);
+						tools.setImage(lpVHdr, index * 3 + 2, 255);
+					}
 
 				break;
 			case 'g':
-				if ((tools.isGreen(fH, fS, fV) && isMask) ||
-					(tools.isGreen(preHsv[indexW][indexH][0], preHsv[indexW][indexH][1], preHsv[indexW][indexH][2]) && isMask))
-				{
-					xCenter += indexH;
-					yCenter += indexW;
-					counter++;
-					tools.setImage(lpVHdr, index * 3, 255);
-					tools.setImage(lpVHdr, index * 3 + 1, 255);
-					tools.setImage(lpVHdr, index * 3 + 2, 255);
-				}
+				if(isMask)
+					if (tools.isGreen(fH, fS, fV) ||
+						tools.isGreen(preHsv[indexW][indexH][0], preHsv[indexW][indexH][1], preHsv[indexW][indexH][2]))
+					{
+						whatColor= 'G';
+						xCenter += indexH;
+						yCenter += indexW;
+						counter++;
+						tools.setImage(lpVHdr, index * 3, 255);
+						tools.setImage(lpVHdr, index * 3 + 1, 255);
+						tools.setImage(lpVHdr, index * 3 + 2, 255);
+					}
 				break;
 			case 'r':
-				if ((tools.isRed(fH, fS, fV) && isMask) ||
-					(tools.isRed(preHsv[indexW][indexH][0], preHsv[indexW][indexH][1], preHsv[indexW][indexH][2]) && isMask))
-				{
-					xCenter += indexH;
-					yCenter += indexW;
-					counter++;
-					tools.setImage(lpVHdr, index * 3, 255);
-					tools.setImage(lpVHdr, index * 3 + 1, 255);
-					tools.setImage(lpVHdr, index * 3 + 2, 255);
-				}
+				if(isMask)
+					if (tools.isRed(fH, fS, fV) ||
+						tools.isRed(preHsv[indexW][indexH][0], preHsv[indexW][indexH][1], preHsv[indexW][indexH][2]))
+					{
+						whatColor = 'R';
+						xCenter += indexH;
+						yCenter += indexW;
+						counter++;
+						tools.setImage(lpVHdr, index * 3, 255);
+						tools.setImage(lpVHdr, index * 3 + 1, 255);
+						tools.setImage(lpVHdr, index * 3 + 2, 255);
+					}
 				break;
 			case 'y':
-				if ((tools.isYellow(fH, fS, fV) && (fV >= 0.2 && fV <= 1) && isMask) ||
-					(tools.isYellow(preHsv[indexW][indexH][0], preHsv[indexW][indexH][1], preHsv[indexW][indexH][2]) && isMask))
-				{
-					xCenter += indexH;
-					yCenter += indexW;
-					counter++;
-					tools.setImage(lpVHdr, index * 3, 255);
-					tools.setImage(lpVHdr, index * 3 + 1, 255);
-					tools.setImage(lpVHdr, index * 3 + 2, 255);
-				}
+				if(isMask)
+					if (tools.isYellow(fH, fS, fV) ||
+						tools.isYellow(preHsv[indexW][indexH][0], preHsv[indexW][indexH][1], preHsv[indexW][indexH][2]))
+					{
+						whatColor='Y';
+						xCenter += indexH;
+						yCenter += indexW;
+						counter++;
+						tools.setImage(lpVHdr, index * 3, 255);
+						tools.setImage(lpVHdr, index * 3 + 1, 255);
+						tools.setImage(lpVHdr, index * 3 + 2, 255);
+					}
 				break;
-			default:
-				
+			default: 
+				if(isMask)
+					if (tools.isBlue(fH, fS, fV) ||
+						tools.isBlue(preHsv[indexW][indexH][0], preHsv[indexW][indexH][1], preHsv[indexW][indexH][2]))
+					{
+						xCenterB += indexH;
+						yCenterB += indexW;
+						counterB++;
+					}
+					else if (tools.isGreen(fH, fS, fV) ||
+						tools.isGreen(preHsv[indexW][indexH][0], preHsv[indexW][indexH][1], preHsv[indexW][indexH][2]))
+					{
+						xCenterG += indexH;
+						yCenterG += indexW;
+						counterG++;
+
+					}
+					else if (tools.isRed(fH, fS, fV) ||
+						tools.isRed(preHsv[indexW][indexH][0], preHsv[indexW][indexH][1], preHsv[indexW][indexH][2]))
+					{
+						xCenterR += indexH;
+						yCenterR += indexW;
+						counterR++;
+
+					}
+					else if (tools.isYellow(fH, fS, fV) ||
+						tools.isYellow(preHsv[indexW][indexH][0], preHsv[indexW][indexH][1], preHsv[indexW][indexH][2]))
+					{
+						xCenterY += indexH;
+						yCenterY += indexW;
+						counterY++;
+					}
+					
 				break;
 			}
+			// save previous HSV value
 			preHsv[indexW][indexH][0] = fH;
 			preHsv[indexW][indexH][1] = fS;
 			preHsv[indexW][indexH][2] = fV;
 		}
 	}
-	if (counter > 100 && counter < 100000) {
-		xAverage = (int)((float)xCenter / (float)counter);
-		yAverage = (int)((float)yCenter / (float)counter);
+	if (state == 'r' || state == 'g' || state == 'b' || state == 'y') {
+
+		if (counter > 100 && counter < 100000) {
+			xAverage[0] = (int)((float)xCenter / (float)counter);
+			yAverage[0] = (int)((float)yCenter / (float)counter);
+		}
+
+	}
+	else{
+		int maxC = MAX(counterR, MAX(counterG, MAX(counterB, counterY)));
+
+		if (maxC == counterR && counterR > 100 && counterR < 100000) {
+				whatColor = 'R';
+				xAverage[0] = (int)((float)xCenterR / (float)counterR);
+				yAverage[0] = (int)((float)yCenterR / (float)counterR);
+		}
+		else if (maxC == counterG  && counterG > 100 && counterG < 100000) {
+				whatColor = 'G';
+				xAverage[0] = (int)((float)xCenterG / (float)counterG);
+				yAverage[0] = (int)((float)yCenterG / (float)counterG);
+		}
+		else if (maxC == counterB  && counterB > 100 && counterB < 100000) {
+				whatColor = 'B';
+				xAverage[0] = (int)((float)xCenterB / (float)counterB);
+				yAverage[0] = (int)((float)yCenterB / (float)counterB);
+		}
+		else if (maxC == counterY && counterY > 100 && counterY < 100000) {
+				whatColor = 'Y';
+				xAverage[0] = (int)((float)xCenterY / (float)counterY);
+				yAverage[0] = (int)((float)yCenterY / (float)counterY);
+		}
+		else {
+			whatColor = 'N';
+			xAverage[0] = 0;
+			yAverage[0] = 0;
+		}
 	}
 	//--calculate centor position--//
 
-	
-	tools.makeCrossPoint(lpVHdr, xAverage, yAverage, BmInfo);
-//	cout << counter << endl;
+
+	//--trace center--//
+	for (index = 0; index < LENGTH; index++) {
+		tools.makeCrossPoint(lpVHdr, xAverage[index], yAverage[index], BmInfo);
+		int xStart, xEnd, yStart, yEnd;
+		if (index != (LENGTH - 1)) {
+			xStart = xAverage[index];
+			xEnd = xAverage[index + 1];
+			yStart = yAverage[index];
+			yEnd = yAverage[index + 1];
+			if(xStart!=0 && xEnd!=0 && yStart!=0 && yEnd!=0)
+				tools.makeLine(lpVHdr, BmInfo, xStart, xEnd, yStart, yEnd);
+		}
+	}
+	int x = xAverage[3];
+	int xp = xAverage[0];
+	int y = yAverage[3];
+	int yp = yAverage[0];
+	int xs, ys;
+	int rx, ry;
+	float angle;
+
+	// xs=abs(xp-x)+1; ys=abs(yp-y);
+	// if( ys > 0 && xs > 0 )angle = 180/Pi*atan(ys/xs);
+	// else if (ys > 0 && xs< 0) angle = 180 - 180/Pi*atan(ys/xs);
+	// else if (ys < 0 &&xs < 0) angle = 180 + 180/Pi*atan(ys/xs);
+	// else if (ys < 0 && xs> 0) angle = 360 - 180/Pi*atan(ys/xs);
+	xs = xp - x;
+	if (xs == 0)xs = xs + 1;
+	angle = atan2(yp - y, xs);
+	if (angle >0) {
+		angle = angle * 180 / Pi;
+	}
+	else {
+		angle = -angle;
+		angle = 360 - angle * 180 / Pi;
+	}
+	angle = 360 - angle;
+	rx = 30 * cos(angle*Pi / 180);
+	ry = 30 * sin(angle * Pi / 180);
+
+
+	tools.makeLine(lpVHdr, BmInfo, 400, 400 + rx, 100, 100 - ry);
+
+
+
+	for (index = LENGTH-1; index > 0; index--) {
+		xAverage[index] = xAverage[index-1];
+		yAverage[index] = yAverage[index-1];
+	}
 	counter = 0;
+	//--trace center--//
+
 
 	//--set mfc title--//
 	CString  strTitle;
-	strTitle.Format(_T("Center is (%d,%d)"), xAverage, yAverage);
+	strTitle.Format(_T("Center : %d,%d, Color :%c"), xAverage[0], yAverage[0], whatColor);
 	AfxGetMainWnd()->SetWindowText(strTitle);
 	//--set mfc title--//
 

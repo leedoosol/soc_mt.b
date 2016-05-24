@@ -8,6 +8,8 @@
 #include "afxwin.h"
 #include "Tools.h"
 #define    _DEF_WEBCAM        1000
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 LRESULT CALLBACK CallbackOnFrame(HWND hWnd, LPVIDEOHDR lpVHdr);
 
