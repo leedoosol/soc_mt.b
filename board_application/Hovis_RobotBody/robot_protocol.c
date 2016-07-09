@@ -11,6 +11,13 @@
 #include <string.h>
 #include "robot_protocol.h"
 #include "uart_api.h"
+
+#define READY_TO_TURN 0x00
+#define READY_TO_WALK 0x01
+#define SIDE_WALK_BACK 0x02
+#define SIDE_WALK_HEAD 0x03
+#define TURN_CLOCKWISE 0x07
+#define TURN_COUNTERCLOCKWISE 0x08		
 //////////////////////////////////////////////////// Protocol Test
 
 void DelayLoop(int delay_time)
@@ -69,27 +76,26 @@ void Motion(unsigned char DATA0)
 	DelayLoop(15000000);		// 3second delay
 }
 
-void F_walk()
+void frontWalk()
 {
-	Motion(0x00);
+	Motion(READY_TO_WALK);
+	Motion(SIDE_WALK_HEAD);
 }
 
-void B_walk()
+void backWalk()
 {
-	Motion(0x01);
+	Motion(READY_TO_WALK);
+	Motion(SIDE_WALK_BACK);
 }
 
-void Turn_left()
+void turnLeft()
 {
-	Motion(0x02);
+	Motion(READY_TO_TURN);
+	Motion(TURN_CLOCKWISE);
 }
 
-void Turn_right()
+void turnRight()
 {	
-	Motion(0x03);
-}
-
-void box()
-{
-	Motion(0x0f);
+	Motion(READY_TO_TURN);
+	Motion(TURN_COUNTERCLOCKWISE);
 }

@@ -44,13 +44,24 @@ int TestItemSelectRobot(void)
 		putchar(Item);
 
 		switch(Item) {
-			case 'a' : case 'A' : init_robot();		break;
-			case 'b' : case 'B' : F_walk();			break;
-			case 'c' : case 'C' : B_walk();			break;
-			case 'd' : case 'D' : Turn_left();		break;
-			case 'e' : case 'E' : Turn_right();		break;
-			case 'f' : case 'F' : box();			break;
-			case 'z' : case 'Z' : return 0;
+			case 'a' : case 'A' : 
+				frontWalk();		
+				break;
+			case 'b' : case 'B' : 
+				backWalk();			
+				break;
+			case 'c' : case 'C' : 
+				turnLeft();			
+				break;
+			case 'd' : case 'D' : 
+				turnRight();		
+				break;
+			case 'e' : case 'E' : 		
+				break;
+			case 'f' : case 'F' : 		
+				break;
+			case 'z' : case 'Z' : 
+				return 0;
 			default : printf("\nNo Test Item Selected");	break;
 		}
 	}
