@@ -78,8 +78,8 @@ void Motion(unsigned char DATA0)
 	CS1 = (Packet^pID^CMD^DATA0^DATA1) & 0xfe;
 	CS2 = (~(Packet^pID^CMD^DATA0^DATA1)) & 0xfe;
 	Send_Command(CS1, CS2, DATA0);
-	printf("CS1=%x\n", CS1);
-	printf("CS2=%x\n", CS2);
+	// printf("CS1=%x\n", CS1);
+	// printf("CS2=%x\n", CS2);
 	DelayLoop(15000000);		// 3second delay
 }
 

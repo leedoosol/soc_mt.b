@@ -246,7 +246,7 @@ int main(int argc, char **argv)
 
 		// draw_value.imgbuf_en = 0; // 읽어 온 데이터를 처리하지 않고 그대로 다시 LCD에 보여줄 때 설정 : comment by yyb[110909]
 		// ClearScreen(255, 255, 255);
-		draw_img_from_buffer((unsigned short *)buf_addr, 160, 130, 1.8, 0); // buf_addr에 들어 있는 내용을 1.8배 확대하여 0도 회전하고 중심을 (160, 130)로 하여  Display : comment by yyb[110909]
+		// draw_img_from_buffer((unsigned short *)buf_addr, 160, 130, 1.8, 0); // buf_addr에 들어 있는 내용을 1.8배 확대하여 0도 회전하고 중심을 (160, 130)로 하여  Display : comment by yyb[110909]
 #if 1 //[[ molink_yyb_110909_BEGIN -- FPGA로부터 읽어온 데이터를 처리하는 과정에 대한 예
 		
 		int black_cnt = 0;
@@ -283,43 +283,51 @@ int main(int argc, char **argv)
 		}
 		green_center_x = green_center_x/green_cnt;
 		green_center_y = green_center_y/green_cnt;
-		printf("B : %5d, Y : %5d, G : %5d\n", black_cnt, yellow_cnt, green_cnt);
+		//B : %5d, Y : %5d
+
+		printf("G : %5d\n", green_cnt);
 		printf("X: %4d, Y: %4d\n", green_center_x, green_center_y);
-			if ( green_cnt > 1800){
+			if ( green_cnt > 800){
 
 				Delay(0xffffff);
 				move_walk_back();
 			}
-			else if ( green_cnt > 1200){
+			else if ( green_cnt > 650){
 				Delay(0xffffff);
 
 				attack_low_kick();
+				Delay(0xffffff);
+				Delay(0xffffff);
+				Delay(0xffffff);
+				move_walk_back();
+	
 			}
-			else if (green_cnt > 600){
-					Delay(0xffffff);
+			else if (green_cnt > 400){
+				Delay(0xffffff);
 
-					attack_punch();
+				attack_punch();
+				Delay(0xffffff);
+				Delay(0xffffff);
+				Delay(0xffffff);
+				move_walk_back();
+
 			}
 			else if ( green_cnt > 200 ){ // 가까울때 
 				if ( green_center_x >= 0 && green_center_x < 60){
-					printf("turn_left\n");
 					Delay(0xffffff);
 
 					turn_left();
 
 				}
 				else if ( green_center_x >= 60 && green_center_x < 120){
-					printf("walk attack");
 					Delay(0xffffff);
 
 					ready_walk_head_punch();
-					Delay(0xffffff);
 					move_walk_head_attack();
 					Delay(0xffffff);
 					ready_steady_from_walk_head_attack();
 				}
 				else {
-					printf("turn_right\n");
 					Delay(0xffffff);
 
 					turn_right();
@@ -329,20 +337,17 @@ int main(int argc, char **argv)
 
 			else { // 멀때 안보일때 
 				if ( green_center_x >= 0 && green_center_x < 60){
-					printf("turn_left");
 
 					Delay(0xffffff);
 					turn_left();
 	
 				}
 				else if ( green_center_x >= 60 && green_center_x < 120){
-					printf("walk front");
 
 					Delay(0xffffff);
 					move_walk_head();
 				}
 				else {
-					printf("turn_right\n");
 
 					Delay(0xffffff);
 					turn_right();					
