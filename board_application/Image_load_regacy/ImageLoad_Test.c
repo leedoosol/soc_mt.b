@@ -8,8 +8,6 @@
 
 #include "uart_api.h"
 #include "cam_disp.h"
-#include "robot_protocol.h"
-
 
 #define DISABLE_IMG_IRQ		0x24402
 #define RD_IMG_DATA			0x24403
@@ -44,9 +42,9 @@ typedef struct __draw_raw_value {
 static DrawRaw_value draw_value;
 
 struct __shade_color {
-	unsigned char r;
-	unsigned char g;
-	unsigned char b;
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
 };
 
 int draw_rotate_value(int cdx, int cdy, int ctx, int cty, float zoom, unsigned int angle)
@@ -153,7 +151,7 @@ void ClearScreen(unsigned char r, unsigned char g, unsigned char b)
 
 static int gFlip(void)
 {
-	return ioctl(devfb, GRAPHIC_FLIP, 0);
+    return ioctl(devfb, GRAPHIC_FLIP, 0);
 }
 
 int ImageProcess_Open(void)
@@ -185,10 +183,10 @@ int ReadImageFromFPGA(unsigned int *addr)
 
 int ImgDisplayToLCD(void)
 {
-	draw_rotate_value(160,240,90,60,2.5,90); // FPGAë¡œë¶€í„° ì½ì–´ ì˜¨ ì˜ìƒ(180x120)ì˜ ì¤‘ì‹¬ì (90,60)ì„ ê¸°ì¤€ìœ¼ë¡œí•˜ì—¬ 90ë„ íšŒì „í•˜ê³ , 2.5ë°° í™•ëŒ€í•˜ì—¬ LCDì˜ ì¤‘ì‹¬ì (160,240)ì— ìœ„ì¹˜í•˜ë„ë¡ ì…‹íŒ…í•˜ëŠ” í•¨ìˆ˜ : comment by yyb[110909]
+	draw_rotate_value(160,240,90,60,2.5,90); // FPGA·ÎºÎÅÍ ÀĞ¾î ¿Â ¿µ»ó(180x120)ÀÇ Áß½ÉÁ¡(90,60)À» ±âÁØÀ¸·ÎÇÏ¿© 90µµ È¸ÀüÇÏ°í, 2.5¹è È®´ëÇÏ¿© LCDÀÇ Áß½ÉÁ¡(160,240)¿¡ À§Ä¡ÇÏµµ·Ï ¼ÂÆÃÇÏ´Â ÇÔ¼ö : comment by yyb[110909]
 	if ( ioctl(devfb, DISPLAY_IMG_DATA, &draw_value) ) {
-		printf("ioctl DISPLAY_IMG_DATA error\n");
-		return -1;
+	    printf("ioctl DISPLAY_IMG_DATA error\n");
+	    return -1;
 	}
 
 	return 0;
@@ -199,13 +197,12 @@ void ImgDisplayQuit(void)
 	ioctl(devfb, DISABLE_IMG_IRQ, 0);
 }
 
-
 int main(int argc, char **argv)
 {
 	int x, y;
 	char ch;
 	int ret;
-	unsigned char buff[5] = {0,};
+    unsigned char buff[5] = {0,};
 	unsigned int buf_addr;
 	unsigned short (*img_buf)[256];
 	
@@ -215,163 +212,51 @@ int main(int argc, char **argv)
 		printf("Usage 3 : imgproc_test -dp2    <Display 2 Frame>\n");
 		exit(1);
 	}
-	eagle_camera_off(); // ì»¤ë„ì—ì„œ ë™ì‘ë˜ëŠ” Camera OFF : comment by yyb[110909]
+	eagle_camera_off(); // Ä¿³Î¿¡¼­ µ¿ÀÛµÇ´Â Camera OFF : comment by yyb[110909]
 	
-	//[[ molink_yyb_110909_BEGIN -- ë¡œë´‡ ëª¸ì²´ì™€ì˜ í†µì‹ ì„ ìœ„í•œ UART ì´ˆê¸°í™”
+	//[[ molink_yyb_110909_BEGIN -- ·Îº¿ ¸öÃ¼¿ÍÀÇ Åë½ÅÀ» À§ÇÑ UART ÃÊ±âÈ­
 	ret = uart_open();
 	if (ret < 0) return EXIT_FAILURE;
 	uart_config(UART1, 115200, 8, UART_PARNONE, 1);
-	//]] molink_yyb_110909_END -- ë¡œë´‡ ëª¸ì²´ì™€ì˜ í†µì‹ ì„ ìœ„í•œ UART ì´ˆê¸°í™”
+	//]] molink_yyb_110909_END -- ·Îº¿ ¸öÃ¼¿ÍÀÇ Åë½ÅÀ» À§ÇÑ UART ÃÊ±âÈ­
 
-	ret = ImageProcess_Open(); // ì´ë¯¸ì§€ ì²˜ë¦¬ë¥¼ ìœ„í•œ ë“œë¼ì´ë²„ Open : comment by yyb[110909]
+	ret = ImageProcess_Open(); // ÀÌ¹ÌÁö Ã³¸®¸¦ À§ÇÑ µå¶óÀÌ¹ö Open : comment by yyb[110909]
 	if (ret < 0) return EXIT_FAILURE;
 
-
-	init_robot();
-
 	Delay(0xffffff);
-	Delay(0xffffff);
-	Delay(0xffffff);
-
-	move_steady();
 
 	if(strcmp("-rd", argv[1]) == 0) {
-		int attack_cnt=0;
-		while(1){
 
-		ret = ReadImageFromFPGA(&buf_addr); // FPGAë¡œë¶€í„° 1Frame(180x120)ì˜ ì´ë¯¸ì§€ Read : comment by yyb[110909]
+		ret = ReadImageFromFPGA(&buf_addr); // FPGA·ÎºÎÅÍ 1Frame(180x120)ÀÇ ÀÌ¹ÌÁö Read : comment by yyb[110909]
 		if (ret < 0) return EXIT_FAILURE;
-		img_buf = (unsigned short (*)[256])buf_addr; // img_bufëŠ” ì½ì–´ ì˜¨ ì´ë¯¸ì§€ ë°ì´í„°ë¥¼ ë°°ì—´(180x120)ë¡œ ì²˜ë¦¬í•˜ê¸° ìœ„í•œ  í¬ì¸í„° ë°°ì—´ ë³€ìˆ˜ : comment by yyb[110909]
-		// printf("\t read 1 frame imgae : addr 0x%x\n", buf_addr);
-
-		// draw_value.imgbuf_en = 0; // ì½ì–´ ì˜¨ ë°ì´í„°ë¥¼ ì²˜ë¦¬í•˜ì§€ ì•Šê³  ê·¸ëŒ€ë¡œ ë‹¤ì‹œ LCDì— ë³´ì—¬ì¤„ ë•Œ ì„¤ì • : comment by yyb[110909]
-		// ClearScreen(255, 255, 255);
-		// draw_img_from_buffer((unsigned short *)buf_addr, 160, 130, 1.8, 0); // buf_addrì— ë“¤ì–´ ìˆëŠ” ë‚´ìš©ì„ 1.8ë°° í™•ëŒ€í•˜ì—¬ 0ë„ íšŒì „í•˜ê³  ì¤‘ì‹¬ì„ (160, 130)ë¡œ í•˜ì—¬  Display : comment by yyb[110909]
-#if 1 //[[ molink_yyb_110909_BEGIN -- FPGAë¡œë¶€í„° ì½ì–´ì˜¨ ë°ì´í„°ë¥¼ ì²˜ë¦¬í•˜ëŠ” ê³¼ì •ì— ëŒ€í•œ ì˜ˆ
-		
-		int black_cnt = 0;
-		int yellow_cnt = 0;
-		int green_cnt = 0;
-		int white_cnt = 0;
-		long int green_center_x=0;
-		long int green_center_y=0;
+		img_buf = (unsigned short (*)[256])buf_addr; // img_buf´Â ÀĞ¾î ¿Â ÀÌ¹ÌÁö µ¥ÀÌÅÍ¸¦ ¹è¿­(180x120)·Î Ã³¸®ÇÏ±â À§ÇÑ  Æ÷ÀÎÅÍ ¹è¿­ º¯¼ö : comment by yyb[110909]
+//		printf("\t read 1 frame imgae : addr 0x%x\n", buf_addr);
 
 
+#if 0 //[[ molink_yyb_110909_BEGIN -- FPGA·ÎºÎÅÍ ÀĞ¾î¿Â µ¥ÀÌÅÍ¸¦ Ã³¸®ÇÏ´Â °úÁ¤¿¡ ´ëÇÑ ¿¹
 		for(y=0; y<120; y++) {
 			for(x=0; x<180; x++) {
-					// printf("%04x ", img_buf[y][x]);
-					//uart1_buffer_write(buff, 4);
-				if(img_buf[y][x] == 0x0000){
-						// black
-					black_cnt++;
-				}
-				else if (img_buf[y][x] == 0xffe0){
-						// yellow
-					yellow_cnt++;
-				}
-				else if (img_buf[y][x] == 0x07e0){
-						// green
-					green_center_y+=y;
-					green_center_x+=x;
-					green_cnt++;
-				}
-				else {
-						//white
-					white_cnt++;
-				}
+				sprintf((char *)buff, "%04x", img_buf[y][x]);
+				uart1_buffer_write(buff, 4);
 			}
 		}
-		green_center_x = green_center_x/green_cnt;
-		green_center_y = green_center_y/green_cnt;
-		//B : %5d, Y : %5d
+#endif //]] molink_yyb_110909_END -- FPGA·ÎºÎÅÍ ÀĞ¾î¿Â µ¥ÀÌÅÍ¸¦ Ã³¸®ÇÏ´Â °úÁ¤¿¡ ´ëÇÑ ¿¹
 
-		printf("G : %5d\n", green_cnt);
-		printf("X: %4d, Y: %4d\n", green_center_x, green_center_y);
-			if ( green_cnt > 800){
-
-				Delay(0xffffff);
-				move_walk_back();
-			}
-			else if ( green_cnt > 650){
-				Delay(0xffffff);
-
-				attack_low_kick();
-				Delay(0xffffff);
-				Delay(0xffffff);
-				Delay(0xffffff);
-				move_walk_back();
-	
-			}
-			else if (green_cnt > 400){
-				Delay(0xffffff);
-
-				attack_punch();
-				Delay(0xffffff);
-				Delay(0xffffff);
-				Delay(0xffffff);
-				move_walk_back();
-
-			}
-			else if ( green_cnt > 200 ){ // ê°€ê¹Œìš¸ë•Œ 
-				if ( green_center_x >= 0 && green_center_x < 60){
-					Delay(0xffffff);
-
-					turn_left();
-
-				}
-				else if ( green_center_x >= 60 && green_center_x < 120){
-					Delay(0xffffff);
-
-					ready_walk_head_punch();
-					move_walk_head_attack();
-					Delay(0xffffff);
-					ready_steady_from_walk_head_attack();
-				}
-				else {
-					Delay(0xffffff);
-
-					turn_right();
-
-				}
-			}
-
-			else { // ë©€ë•Œ ì•ˆë³´ì¼ë•Œ 
-				if ( green_center_x >= 0 && green_center_x < 60){
-
-					Delay(0xffffff);
-					turn_left();
-	
-				}
-				else if ( green_center_x >= 60 && green_center_x < 120){
-
-					Delay(0xffffff);
-					move_walk_head();
-				}
-				else {
-
-					Delay(0xffffff);
-					turn_right();					
-				}
-
-			}
-		}
-#endif //]] molink_yyb_110909_END -- FPGAë¡œë¶€í„° ì½ì–´ì˜¨ ë°ì´í„°ë¥¼ ì²˜ë¦¬í•˜ëŠ” ê³¼ì •ì— ëŒ€í•œ ì˜ˆ
-
-		printf("\t read 1 frame imgae data completely\n");
+	    printf("\t read 1 frame imgae data completely\n");
 	}
 	else if(strcmp("-dp", argv[1]) == 0) {
-		ret = ImgDisplayToLCD(); // FPGAë¡œ ë¶€í„° ì½ì–´ì˜¨ ì´ë¯¸ì§€ë¥¼ LCDì— ì‹¤ì‹œê°„ìœ¼ë¡œ  Display : comment by yyb[110909]
+		ret = ImgDisplayToLCD(); // FPGA·Î ºÎÅÍ ÀĞ¾î¿Â ÀÌ¹ÌÁö¸¦ LCD¿¡ ½Ç½Ã°£À¸·Î  Display : comment by yyb[110909]
 		if (ret < 0) return EXIT_FAILURE;
 		
 		printf("\nPress Enter Key to STOP the test !!!");
 		
 		ch = getchar();
-		ImgDisplayQuit(); // LCD Display ì¢…ë£Œ : comment by yyb[110909]
+		ImgDisplayQuit(); // LCD Display Á¾·á : comment by yyb[110909]
 		printf("\nTest is Stopped\n");
 	}
 	else if(strcmp("-dp2", argv[1]) == 0) {
-		ClearScreen(255, 255, 255); // LCD í™”ë©´ì„ ë°±ìƒ‰ìœ¼ë¡œ Clear : comment by yyb[110909]
-		gFlip(); // ê·¸ë˜í”½ ì²˜ë¦¬ëœ ë‚´ìš©ì„ LCDì— ë³´ì—¬ì¤Œ : comment by yyb[110909]
+		ClearScreen(255, 255, 255); // LCD È­¸éÀ» ¹é»öÀ¸·Î Clear : comment by yyb[110909]
+		gFlip(); // ±×·¡ÇÈ Ã³¸®µÈ ³»¿ëÀ» LCD¿¡ º¸¿©ÁÜ : comment by yyb[110909]
 		ClearScreen(255, 255, 255);
 		gFlip();
 		ClearScreen(255, 255, 255);
@@ -385,9 +270,9 @@ int main(int argc, char **argv)
 
 		printf("Image Load from FPGA!\n");
 
-		draw_value.imgbuf_en = 0; // ì½ì–´ ì˜¨ ë°ì´í„°ë¥¼ ì²˜ë¦¬í•˜ì§€ ì•Šê³  ê·¸ëŒ€ë¡œ ë‹¤ì‹œ LCDì— ë³´ì—¬ì¤„ ë•Œ ì„¤ì • : comment by yyb[110909]
+		draw_value.imgbuf_en = 0; // ÀĞ¾î ¿Â µ¥ÀÌÅÍ¸¦ Ã³¸®ÇÏÁö ¾Ê°í ±×´ë·Î ´Ù½Ã LCD¿¡ º¸¿©ÁÙ ¶§ ¼³Á¤ : comment by yyb[110909]
 		ClearScreen(255, 255, 255);
-		draw_img_from_buffer((unsigned short *)buf_addr, 160, 130, 1.8, 0); // buf_addrì— ë“¤ì–´ ìˆëŠ” ë‚´ìš©ì„ 1.8ë°° í™•ëŒ€í•˜ì—¬ 0ë„ íšŒì „í•˜ê³  ì¤‘ì‹¬ì„ (160, 130)ë¡œ í•˜ì—¬  Display : comment by yyb[110909]
+		draw_img_from_buffer((unsigned short *)buf_addr, 160, 130, 1.8, 0); // buf_addr¿¡ µé¾î ÀÖ´Â ³»¿ëÀ» 1.8¹è È®´ëÇÏ¿© 0µµ È¸ÀüÇÏ°í Áß½ÉÀ» (160, 130)·Î ÇÏ¿©  Display : comment by yyb[110909]
 //		gFlip();
 		printf("1. Draw Image to LCD!\n");
 //    }
@@ -402,10 +287,10 @@ int main(int argc, char **argv)
 		printf("Image Load from FPGA!\n");
 
 		//////////////////////////////////////////////////////////////////
-		// img_bufì˜ ë°ì´í„°ì— ëŒ€í•œ ì´ë¯¸ì§€ ì²˜ë¦¬ ê³¼ì •ì´ ì´ ìœ„ì¹˜ì—ì„œ ì´ë£¨ì–´ì§ //
+		// img_bufÀÇ µ¥ÀÌÅÍ¿¡ ´ëÇÑ ÀÌ¹ÌÁö Ã³¸® °úÁ¤ÀÌ ÀÌ À§Ä¡¿¡¼­ ÀÌ·ç¾îÁü //
 		//////////////////////////////////////////////////////////////////
 		
-		draw_value.imgbuf_en = 1; // ì½ì–´ ì˜¨ ë°ì´í„°ë¥¼ ì²˜ë¦¬í•˜ê³ , ì²˜ë¦¬ëœ ë°ì´í„°ë¥¼ LCDì— ë³´ì—¬ì¤„ ë•Œ ì„¤ì • : comment by yyb[110909]
+		draw_value.imgbuf_en = 1; // ÀĞ¾î ¿Â µ¥ÀÌÅÍ¸¦ Ã³¸®ÇÏ°í, Ã³¸®µÈ µ¥ÀÌÅÍ¸¦ LCD¿¡ º¸¿©ÁÙ ¶§ ¼³Á¤ : comment by yyb[110909]
 		draw_img_from_buffer((unsigned short *)buf_addr, 160, 360, 1.8, 0);
 		gFlip();
 		printf("2. Draw Image to LCD!\n");
@@ -425,7 +310,7 @@ int main(int argc, char **argv)
 	uart_close();
 	close(devfb);
 
-	eagle_camera_on(); // ì»¤ë„ì—ì„œ ë™ì‘ë˜ëŠ” Camera ON : comment by yyb[110909]
+	eagle_camera_on(); // Ä¿³Î¿¡¼­ µ¿ÀÛµÇ´Â Camera ON : comment by yyb[110909]
 
 	return(0);
 }

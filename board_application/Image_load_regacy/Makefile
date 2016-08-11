@@ -27,7 +27,7 @@ export AS LD CC CPP AR NM STRIP OBJCOPY OBJDUMP RANLIB CFLAGS
 
 PROJ = ImageLoad_Test
 
-OBJS = ImageLoad_Test.o uart_api.o cam_disp.o robot_protocol.o
+OBJS = ImageLoad_Test.o uart_api.o cam_disp.o
 
 
 all: $(PROJ)

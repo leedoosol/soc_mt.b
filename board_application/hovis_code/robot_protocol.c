@@ -30,7 +30,7 @@ void DelayLoop(int delay_time)
 void init_robot()
 {
 	unsigned char Init_Buffer[10] = {0,};
-	//printf("init robot");
+	printf("init robot");
 	
 	Init_Buffer[0] = 0xff;
 	Init_Buffer[1] = 0xff;
