@@ -12,20 +12,21 @@
 #include "robot_protocol.h"
 #include "uart_api.h"
 //////////////////////////////////////////////////// Protocol Test
-#define ATTACK_FORWARD_KICK 0x00
-#define ATTACK_LOW_KICK 0x01
-#define ATTACK_MIDDLE_KICK 0x02
-#define ATTACK_PUNCH_KICK 0x03
-#define MOVE_STEADY 0x04
-#define MOVE_WALK_BACK 0x05
-#define MOVE_WALK_HEAD 0x06
-#define MOVE_WALK_HEAD_ATTACT 0x07
-#define READY_STEADY_FROM_WALK_HEAD_ATTACT 0x08
-#define READY_WALK_HEAD_PUNCH 0x09
-#define SEARCH_LEFT 0x0a
-#define SEARCH_RIGHT 0x0b
-#define TURN_LEFT 0x0c
-#define TURN_RIGHT 0x0d
+#define ATTACK_FORWARD_WALK_PUNCH 0x00
+#define ATTACK_FORWARD_WALK_PUNCH_NEED_READY 0x01
+#define ATTACK_FRONT_KICK 0x02
+#define ATTACK_LOW_KICK 0x03
+#define ATTACK_MIDDLE_KICK 0x04
+#define ATTACK_PUNCH 0x05
+#define MOVE_WALK_BACKWARD_WITH_PUNCH 0x06
+#define MOVE_WALK_FORWARD 0x07
+#define POSE_STEADY 0x08
+#define READY_PUNCH_TO_STEADY 0x09
+#define READY_STEADY_TO_PUNCH 0x0a
+#define SEARCH_LEFT 0x0b
+#define SEARCH_RIGHT 0x0c
+#define TURN_LEFT 0x0d
+#define TURN_RIGHT 0x0e
 
 void DelayLoop(int delay_time)
 {
@@ -80,60 +81,6 @@ void Motion(unsigned char DATA0)
 	Send_Command(CS1, CS2, DATA0);
 	// printf("CS1=%x\n", CS1);
 	// printf("CS2=%x\n", CS2);
-	DelayLoop(15000000);		// 3second delay
+	 DelayLoop(2000000);		// 3second delay
 }
 
-void attack_forward_kick()
-{
-	Motion(ATTACK_FORWARD_KICK);
-}
-
-void attack_low_kick(){
-	Motion(ATTACK_LOW_KICK);
-}
-
-void attack_middle_kick(){
-	Motion(ATTACK_MIDDLE_KICK);
-}
-
-void attack_punch(){
-	Motion(ATTACK_PUNCH_KICK);
-}
-void move_steady(){
-	Motion(MOVE_STEADY);
-}
-
-void move_walk_back(){
-	Motion(MOVE_WALK_BACK);
-}
-
-void move_walk_head_attack(){
-	Motion(MOVE_WALK_HEAD_ATTACT);
-}
-
-void move_walk_head(){
-	Motion(MOVE_WALK_HEAD);
-}
-
-void ready_steady_from_walk_head_attack(){
-	Motion(READY_STEADY_FROM_WALK_HEAD_ATTACT);
-}
-
-
-void ready_walk_head_punch(){
-	Motion(READY_WALK_HEAD_PUNCH);
-}
-
-void search_left(){
-	Motion(SEARCH_LEFT);
-} 
-
-void search_right(){
-	Motion(SEARCH_RIGHT);
-}
-void turn_left(){
-	Motion(TURN_LEFT);
-}
-void turn_right(){
-	Motion(TURN_RIGHT);
-}

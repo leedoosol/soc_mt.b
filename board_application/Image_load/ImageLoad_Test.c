@@ -18,6 +18,24 @@
 #define CLEAR_SCREEN		0x24407
 #define GRAPHIC_FLIP	0x24410
 
+
+#define ATTACK_FORWARD_WALK_PUNCH 0x00
+#define ATTACK_FORWARD_WALK_PUNCH_NEED_READY 0x01
+#define ATTACK_FRONT_KICK 0x02
+#define ATTACK_LOW_KICK 0x03
+#define ATTACK_MIDDLE_KICK 0x04
+#define ATTACK_PUNCH 0x05
+#define MOVE_WALK_BACKWARD_WITH_PUNCH 0x06
+#define MOVE_WALK_FORWARD 0x07
+#define POSE_STEADY 0x08
+#define READY_PUNCH_TO_STEADY 0x09
+#define READY_STEADY_TO_PUNCH 0x0a
+#define SEARCH_LEFT 0x0b
+#define SEARCH_RIGHT 0x0c
+#define TURN_LEFT 0x0d
+#define TURN_RIGHT 0x0e
+
+
 int devfb;
 
 void Delay(int delay_time)
@@ -231,134 +249,175 @@ int main(int argc, char **argv)
 
 	Delay(0xffffff);
 	Delay(0xffffff);
+
+	Motion(POSE_STEADY);
+
 	Delay(0xffffff);
-
-	move_steady();
-
+	Delay(0xffffff);
+	// int turn_cnt = 12;
 	if(strcmp("-rd", argv[1]) == 0) {
+
 		int attack_cnt=0;
 		while(1){
 
-		ret = ReadImageFromFPGA(&buf_addr); // FPGA로부터 1Frame(180x120)의 이미지 Read : comment by yyb[110909]
-		if (ret < 0) return EXIT_FAILURE;
-		img_buf = (unsigned short (*)[256])buf_addr; // img_buf는 읽어 온 이미지 데이터를 배열(180x120)로 처리하기 위한  포인터 배열 변수 : comment by yyb[110909]
-		// printf("\t read 1 frame imgae : addr 0x%x\n", buf_addr);
+			ret = ReadImageFromFPGA(&buf_addr);
+			if (ret < 0) return EXIT_FAILURE;
 
-		// draw_value.imgbuf_en = 0; // 읽어 온 데이터를 처리하지 않고 그대로 다시 LCD에 보여줄 때 설정 : comment by yyb[110909]
-		// ClearScreen(255, 255, 255);
-		// draw_img_from_buffer((unsigned short *)buf_addr, 160, 130, 1.8, 0); // buf_addr에 들어 있는 내용을 1.8배 확대하여 0도 회전하고 중심을 (160, 130)로 하여  Display : comment by yyb[110909]
-#if 1 //[[ molink_yyb_110909_BEGIN -- FPGA로부터 읽어온 데이터를 처리하는 과정에 대한 예
-		
-		int black_cnt = 0;
-		int yellow_cnt = 0;
-		int green_cnt = 0;
-		int white_cnt = 0;
-		long int green_center_x=0;
-		long int green_center_y=0;
+			draw_value.imgbuf_en = 0; // 읽어 온 데이터를 처리하지 않고 그대로 다시 LCD에 보여줄 때 설정 : comment by yyb[110909]
+			ClearScreen(255, 255, 255);
+			draw_img_from_buffer((unsigned short *)buf_addr, 160, 130, 1.8, 0); // buf_addr에 들어 있는 내용을 1.8배 확대하여 0도 회전하고 중심을 (160, 130)로 하여  Display : comment by yyb[110909]
+			img_buf = (unsigned short (*)[256])buf_addr; // img_buf는 읽어 온 이미지 데이터를 배열(180x120)로 처리하기 위한  포인터 배열 변수 : comment by yyb[110909]
+
+			draw_value.imgbuf_en = 1; // 읽어 온 데이터를 처리하고, 처리된 데이터를 LCD에 보여줄 때 설정 : comment by yyb[110909]
+			draw_img_from_buffer((unsigned short *)buf_addr, 160, 360, 1.8, 0);
+			gFlip();
+
+			
+			int black_cnt = 0;
+			int yellow_cnt = 0;
+			int green_cnt = 0;
+			int white_cnt = 0;
+			long int green_center_x=0;
+			long int green_center_y=0;
 
 
-		for(y=0; y<120; y++) {
-			for(x=0; x<180; x++) {
-					// printf("%04x ", img_buf[y][x]);
-					//uart1_buffer_write(buff, 4);
-				if(img_buf[y][x] == 0x0000){
-						// black
-					black_cnt++;
-				}
-				else if (img_buf[y][x] == 0xffe0){
-						// yellow
-					yellow_cnt++;
-				}
-				else if (img_buf[y][x] == 0x07e0){
-						// green
-					green_center_y+=y;
-					green_center_x+=x;
-					green_cnt++;
-				}
-				else {
-						//white
-					white_cnt++;
+			for(y=0; y<120; y++) {
+				for(x=0; x<180; x++) {
+						// printf("%04x ", img_buf[y][x]);
+						//uart1_buffer_write(buff, 4);
+					if(img_buf[y][x] == 0x0000){
+							// black
+						black_cnt++;
+					}
+					else if (img_buf[y][x] == 0xffe0){
+							// yellow
+						yellow_cnt++;
+					}
+					else if (img_buf[y][x] == 0x07e0){
+							// green
+						green_center_y+=y;
+						green_center_x+=x;
+						green_cnt++;
+					}
+					else {
+							//white
+						white_cnt++;
+					}
 				}
 			}
-		}
-		green_center_x = green_center_x/green_cnt;
-		green_center_y = green_center_y/green_cnt;
-		//B : %5d, Y : %5d
+			green_center_x = green_center_x/green_cnt;
+			green_center_y = green_center_y/green_cnt;
+			//B : %5d, Y : %5d
 
-		printf("G : %5d\n", green_cnt);
-		printf("X: %4d, Y: %4d\n", green_center_x, green_center_y);
-			if ( green_cnt > 800){
-
-				Delay(0xffffff);
-				move_walk_back();
+			printf("G : %5d\n", green_cnt);
+			printf("X: %4d, Y: %4d\n", green_center_x, green_center_y);
+			if ( green_cnt < 50){
+				Motion(TURN_RIGHT);
 			}
-			else if ( green_cnt > 650){
-				Delay(0xffffff);
-
-				attack_low_kick();
-				Delay(0xffffff);
-				Delay(0xffffff);
-				Delay(0xffffff);
-				move_walk_back();
-	
-			}
-			else if (green_cnt > 400){
-				Delay(0xffffff);
-
-				attack_punch();
-				Delay(0xffffff);
-				Delay(0xffffff);
-				Delay(0xffffff);
-				move_walk_back();
-
-			}
-			else if ( green_cnt > 200 ){ // 가까울때 
+			else if ( green_cnt < 200){
 				if ( green_center_x >= 0 && green_center_x < 60){
-					Delay(0xffffff);
-
-					turn_left();
-
+					Motion(TURN_LEFT);
 				}
 				else if ( green_center_x >= 60 && green_center_x < 120){
-					Delay(0xffffff);
-
-					ready_walk_head_punch();
-					move_walk_head_attack();
-					Delay(0xffffff);
-					ready_steady_from_walk_head_attack();
+					Motion(MOVE_WALK_FORWARD);
 				}
 				else {
-					Delay(0xffffff);
-
-					turn_right();
-
+					Motion(TURN_RIGHT);
 				}
 			}
-
-			else { // 멀때 안보일때 
+			else if (green_cnt < 500){
 				if ( green_center_x >= 0 && green_center_x < 60){
-
-					Delay(0xffffff);
-					turn_left();
-	
+					Motion(TURN_LEFT);
 				}
 				else if ( green_center_x >= 60 && green_center_x < 120){
+					Motion(ATTACK_FORWARD_WALK_PUNCH);
+					Delay(0x2fffff);
 
-					Delay(0xffffff);
-					move_walk_head();
 				}
 				else {
+					Motion(TURN_RIGHT);
+				}
+			}
+			else if ( green_cnt < 800 ){ 
+				if ( green_center_x >= 0 && green_center_x < 40){
+					Motion(TURN_LEFT);
 
-					Delay(0xffffff);
-					turn_right();					
+				}
+				else if ( green_center_x >= 40 && green_center_x < 140){
+					if( attack_cnt % 2 == 0){
+						Motion(ATTACK_FORWARD_WALK_PUNCH);
+						Delay(0x2fffff);
+						Motion(MOVE_WALK_BACKWARD_WITH_PUNCH);
+						Delay(0x2fffff);
+
+					}
+					else {
+						Motion(ATTACK_PUNCH);
+						Delay(0x2fffff);
+
+					}
+					attack_cnt++;
+				}
+				else {
+					Motion(TURN_RIGHT);
+				}
+			}
+
+			else if (green_cnt < 1100){ 
+				if ( green_center_x >= 0 && green_center_x < 40){
+					Motion(TURN_LEFT);
+
+				}
+				else if ( green_center_x >= 40 && green_center_x < 140){
+					if(attack_cnt % 2 == 0){
+						Motion(ATTACK_MIDDLE_KICK);
+						Delay(0xfffff);
+					}
+					else {
+						Motion(ATTACK_PUNCH);
+						Delay(0x2fffff);
+
+					}
+					attack_cnt++;
+				}
+				else {
+					Motion(TURN_RIGHT);
 				}
 
 			}
-		}
-#endif //]] molink_yyb_110909_END -- FPGA로부터 읽어온 데이터를 처리하는 과정에 대한 예
+			else {
+				if ( green_center_x >= 0 && green_center_x < 30){
+					Motion(TURN_LEFT);
 
-		printf("\t read 1 frame imgae data completely\n");
+				}
+				else if ( green_center_x >= 30 && green_center_x < 150){
+					if(attack_cnt % 2 == 0){
+						Motion(ATTACK_MIDDLE_KICK);
+						Delay(0xfffff);
+						Motion(MOVE_WALK_BACKWARD_WITH_PUNCH);
+						Delay(0x2fffff);
+
+					}
+					else {
+						Motion(ATTACK_PUNCH);
+						Delay(0xfffff);
+						Motion(MOVE_WALK_BACKWARD_WITH_PUNCH);
+						Delay(0x2fffff);
+
+
+					}
+					attack_cnt++;
+				}
+				else {
+					Motion(TURN_RIGHT);
+				}				
+			
+			}
+		if (attack_cnt >=4)
+			attack_cnt = 0;
+		}
 	}
+
 	else if(strcmp("-dp", argv[1]) == 0) {
 		ret = ImgDisplayToLCD(); // FPGA로 부터 읽어온 이미지를 LCD에 실시간으로  Display : comment by yyb[110909]
 		if (ret < 0) return EXIT_FAILURE;
